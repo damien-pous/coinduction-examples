@@ -23,11 +23,12 @@ Module streams.
  (** associated companions  *)
  Notation T := (t (B b)).
  Notation t := (t b).
+ Notation bt := (bt b).
 
  (** notations  for easing readability in proofs by enhanced coinduction *)
  Notation "x ≡[ R ] y" := (t R x y) (at level 80).
  Notation "x ≡ y" := (t _ x y) (at level 80). 
- Notation "x [≡] y" := (b (body t _) x y) (at level 80).
+ Notation "x [≡] y" := (bt _ x y) (at level 80).
  
  (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [t R] or [T f R]
     in order to improve compilation time, we specialize the corresponding instances
@@ -61,7 +62,7 @@ Module streams.
  Global Instance Equivalence_t R: Equivalence (t R).
  Proof.
    apply Equivalence_t.
-   apply eq_t. apply converse_t. apply square_t.
+   apply eq_t. apply square_t. apply converse_t. 
  Qed.
  (** and [gfp b = ~] in particular *)
  Corollary Equivalence_bisim: Equivalence (gfp b).

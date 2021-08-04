@@ -98,10 +98,11 @@ Module CCS(Export M: N).
  Notation B := (B b).
  Notation T := (t B).
  Notation t := (t b).
+ Notation bt := (bt b).
  (** notations  for easing readability in proofs by enhanced coinduction *)
  Notation "x ≡[ R ] y" := (t R x y) (at level 80).
  Notation "x ≡ y" := (t _ x y) (at level 80). 
- Notation "x [≡] y" := (b (body t _) x y) (at level 80).
+ Notation "x [≡] y" := (bt _ x y) (at level 80).
 
  
  (** Some valid laws  *)
@@ -160,9 +161,9 @@ Module CCS(Export M: N).
 
  (** thus bisimilarity, [t R], and [T f R] are always equivalence relations *)
  Global Instance Equivalence_T f R: Equivalence (T f R).
- Proof. apply Equivalence_T. apply refl_t. apply converse_t. apply square_t. Qed.
+ Proof. apply Equivalence_T. apply refl_t. apply square_t. apply converse_t. Qed.
  Global Instance Equivalence_t R: Equivalence (t R).
- Proof. apply Equivalence_t. apply refl_t. apply converse_t. apply square_t. Qed.
+ Proof. apply Equivalence_t. apply refl_t. apply square_t. apply converse_t. Qed.
  Corollary Equivalence_bisim: Equivalence (gfp b).
  Proof. apply Equivalence_t. Qed.
 
