@@ -1,0 +1,15 @@
+*.aux
+*.bak
+*.vo*
+*.d
+*.glob
+*.cm*
+*.o
+*.a
+html
+_build
+.merlin
+depgraph.*
+Makefile.coq
+Makefile.coq.conf
+reification_i.ml

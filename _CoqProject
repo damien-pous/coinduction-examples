@@ -1,0 +1,7 @@
+-arg -w -arg -undo-batch-mode
+
+-R . CoinductionExamples
+
+divergence.v
+streams.v
+ccs.v
