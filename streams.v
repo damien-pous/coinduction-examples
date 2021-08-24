@@ -21,9 +21,10 @@ Module streams.
  Infix "~" := (gfp b) (at level 70).
  
  (** associated companions  *)
- Notation T := (t (B b)).
  Notation t := (t b).
+ Notation T := (T b).
  Notation bt := (bt b).
+ Notation bT := (bT b).
 
  (** notations  for easing readability in proofs by enhanced coinduction *)
  Notation "x ≡[ R ] y" := (t R x y) (at level 80).
@@ -33,9 +34,9 @@ Module streams.
  (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [t R] or [T f R]
     in order to improve compilation time, we specialize the corresponding instances
     TODO: this is still not really efficient, fix this in a more satisfactory way (see more below). *)
- Local Remove Hints rel_gfp_t rel_gfp_T: typeclass_instances.
- Instance rel_gfp_t_: forall R, subrelation (gfp b) (t R) := (@rel_gfp_t _ b).
- Instance rel_gfp_T_: forall f R, subrelation (gfp b) (T f R) := (@rel_gfp_T _ b).
+ Local Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
+ Instance subrelation_gfp_t_: forall R, subrelation (gfp b) (t R) := (@subrelation_gfp_t _ b).
+ Instance subrelation_gfp_T_: forall f R, subrelation (gfp b) (T f R) := (@subrelation_gfp_T _ b).
    
  (** [eq] is a post-fixpoint, thus [const eq] is below [t] *)
  Lemma eq_t: const eq <= t.
@@ -58,10 +59,15 @@ Module streams.
    congruence. eexists; eauto.
  Qed.
 
- (** thus [t R] is always an equivalence relation *)
+ (** thus [t R] and [T f R] are always equivalence relations *)
  Global Instance Equivalence_t R: Equivalence (t R).
  Proof.
    apply Equivalence_t.
+   apply eq_t. apply square_t. apply converse_t. 
+ Qed.
+ Global Instance Equivalence_T f R: Equivalence (T f R).
+ Proof.
+   apply Equivalence_T.
    apply eq_t. apply square_t. apply converse_t. 
  Qed.
  (** and [gfp b = ~] in particular *)
@@ -103,7 +109,7 @@ Module streams.
  Qed.
 
  (** addition corresponds to a compatible function *)
- Lemma plus_t: binary_ctx plus <= t.
+ Lemma ctx_plus_t: binary_ctx plus <= t.
  Proof.
    apply leq_t. intro R. apply (leq_binary_ctx plus).
    intros x x' [Hx Hx'] y y' [Hy Hy'].
@@ -111,7 +117,8 @@ Module streams.
     simpl. congruence.
     simpl tl. now apply in_binary_ctx. 
  Qed.
- Global Instance plust_t: forall R, Proper (t R ==> t R ==> t R) plus := binary_proper plus_t.
+ Global Instance plus_t: forall R, Proper (t R ==> t R ==> t R) plus := binary_proper_t ctx_plus_t.
+ Global Instance plus_T f: forall R, Proper (T f R ==> T f R ==> T f R) plus := binary_proper_T ctx_plus_t.
  
 
  (** * shuffle product *)
@@ -149,7 +156,7 @@ Module streams.
           CompleteLattice_mon
           comp_leq comp_weq
           app_leq app_weq
-          rel_gfp_t rel_gfp_T
+          subrelation_gfp_t subrelation_gfp_T
       : typeclass_instances.
    Print HintDb typeclass_instances.
    Set Typeclasses Debug Verbosity 2.
@@ -161,11 +168,11 @@ Module streams.
  (*
  Instance proper_impl_t R:
    Proper (gfp b ==> t R ==> Basics.impl) (t R).
- Proof. intros x y H u v H' E. eapply rel_gfp_t in H. now rewrite <-H, <-H'. Qed.
+ Proof. intros x y H u v H' E. eapply subrelation_gfp_t in H. now rewrite <-H, <-H'. Qed.
  Instance proper_impl'_t R:
    Proper (gfp b ==> t R ==> Basics.flip Basics.impl) (t R).
- Proof. intros x y H u v H' E. eapply rel_gfp_t in H. now rewrite H, H'. Qed.
- Remove Hints rel_gfp_t rel_gfp_T: typeclass_instances.
+ Proof. intros x y H u v H' E. eapply subrelation_gfp_t in H. now rewrite H, H'. Qed.
+ Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
   *)
  (*
    even wih those instances, other rewrites remain pretty slow, 
@@ -198,15 +205,15 @@ Module streams.
    coinduction R HR. intros x y z. split; ssimpl.
     nia. 
     rewrite 2HR. rewrite 2plusA. 
-    apply plust_t. 2: reflexivity.
+    apply plus_t. 2: reflexivity.
     rewrite <-2plusA. 
-    apply plust_t. reflexivity. now rewrite plusC.
+    apply plus_t. reflexivity. now rewrite plusC.
  Qed.
 
  Lemma shuf_plus_x: forall x y z, (y + z)@x ~ y@x + z@x.
  Proof.
    intros. rewrite shufC, shuf_x_plus.
-   apply plust_t; apply shufC.
+   apply plus_t; apply shufC.
  Qed.
 
  Lemma shufA: forall x y z, x @ (y @ z) ~ (x @ y) @ z.
@@ -218,20 +225,20 @@ Module streams.
  Qed.
 
  (** shuffle product is only compatible up-to *)
- Lemma shuf_t: binary_ctx shuf <= t. 
+ Lemma ctx_shuf_t: binary_ctx shuf <= t. 
  Proof.
    apply Coinduction. 
    intro R. apply (leq_binary_ctx shuf). 
    intros x x' Hx y y' Hy. split; ssimpl.
    f_equal. apply Hx. apply Hy.
-   apply (ftT_T _ plus_t). simpl. apply in_binary_ctx.  
-    apply (fTf_Tf b). simpl. apply in_binary_ctx. apply (id_T b). apply Hx.
-    apply (b_T b), Hy. 
-    apply (fTf_Tf b). simpl. apply in_binary_ctx. now apply (b_T b). 
-    apply (id_T b), Hy.
+   (* TOTHINK: would be nicer to do this by rewriting *)
+   apply plus_T; apply binary_proper_Tctx.
+   apply (id_T b), Hx. 
+   apply (b_T b), Hy. 
+   apply (b_T b), Hx. 
+   apply (id_T b), Hy. 
  Qed.
- Global Instance shuft_t: forall R, Proper (t R ==> t R ==> t R) shuf := binary_proper shuf_t.
- 
+ Global Instance shuf_t: forall R, Proper (t R ==> t R ==> t R) shuf := binary_proper_t ctx_shuf_t. 
  
  
  (** * convolution product *)
@@ -276,9 +283,9 @@ Module streams.
    coinduction R HR. intros x y z. split; msimpl.
     nia. 
     rewrite 2HR. rewrite 2plusA. 
-    apply plust_t. 2: reflexivity.
+    apply plus_t. 2: reflexivity.
     rewrite <-2plusA. 
-    apply plust_t. reflexivity. now rewrite plusC.
+    apply plus_t. reflexivity. now rewrite plusC.
  Qed.
 
  Lemma c_plus n m: c (n+m) ~ c n + c m.
@@ -296,29 +303,28 @@ Module streams.
  Qed.
 
  (** as for the shuffle product, convolution product is only compatible up to  *)
- Lemma mult_t: binary_ctx mult <= t. 
+ Lemma ctx_mult_t: binary_ctx mult <= t. 
  Proof.
    apply Coinduction. 
    intro R. apply (leq_binary_ctx mult).
    intros x x' Hx y y' Hy. split; msimpl.
    f_equal. apply Hx. apply Hy.
-   apply (ftT_T _ plus_t). simpl. apply in_binary_ctx.  
-    apply (fTf_Tf b). simpl. apply in_binary_ctx. apply (id_T b). apply Hx.
-    apply (b_T b), Hy. 
-    apply (fTf_Tf b). simpl. apply in_binary_ctx.
-    apply (t_T b). apply proj1 in Hx. now rewrite Hx.
-    apply (id_T b), Hy.
+   apply plus_T; apply binary_proper_Tctx. 
+   apply (id_T b), Hx. 
+   apply (b_T b), Hy.
+   rewrite (proj1 Hx). reflexivity. 
+   apply (id_T b), Hy.
  Qed.
- Global Instance multt_t: forall R, Proper (t R ==> t R ==> t R) mult := binary_proper mult_t.
+ Global Instance mult_t: forall R, Proper (t R ==> t R ==> t R) mult := binary_proper_t ctx_mult_t.
  
  Lemma mult_plus_x: forall x y z, (y + z) * x ~ y*x + z*x.
  Proof.
    coinduction R HR. intros x y z. split; msimpl.
     nia. 
     rewrite c_plus, 2HR, 2plusA.
-    apply plust_t. 2: reflexivity.
+    apply plus_t. 2: reflexivity.
     rewrite <-2plusA. 
-    apply plust_t. reflexivity. now rewrite plusC.
+    apply plus_t. reflexivity. now rewrite plusC.
  Qed.
  
  Lemma multA: forall x y z, x * (y * z) ~ (x * y) * z.

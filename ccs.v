@@ -95,10 +95,10 @@ Module CCS(Export M: N).
  Notation b := (cap s (converse ° s ° converse)).
 
  Notation "p ~ q" := (gfp b p%ccs q%ccs) (at level 70).
- Notation B := (B b).
- Notation T := (t B).
  Notation t := (t b).
+ Notation T := (T b).
  Notation bt := (bt b).
+ Notation bT := (bT b).
  (** notations  for easing readability in proofs by enhanced coinduction *)
  Notation "x ≡[ R ] y" := (t R x y) (at level 80).
  Notation "x ≡ y" := (t _ x y) (at level 80). 
@@ -152,7 +152,7 @@ Module CCS(Export M: N).
  Proof.
    apply Coinduction, by_Symmetry. 
    intros R x z [y xy yz]. now exists y.
-   rewrite cap_l at 1. rewrite <-id_t. 
+   rewrite cap_l at 1. setoid_rewrite <-id_t. 
    intros R x z [y xy yz] l x' xx'.
    destruct (xy _ _ xx') as [y' yy' x'y']. 
    destruct (yz _ _ yy') as [z' zz' y'z'].
@@ -160,38 +160,37 @@ Module CCS(Export M: N).
  Qed.
 
  (** thus bisimilarity, [t R], and [T f R] are always equivalence relations *)
- Global Instance Equivalence_T f R: Equivalence (T f R).
- Proof. apply Equivalence_T. apply refl_t. apply square_t. apply converse_t. Qed.
  Global Instance Equivalence_t R: Equivalence (t R).
  Proof. apply Equivalence_t. apply refl_t. apply square_t. apply converse_t. Qed.
+ Global Instance Equivalence_T f R: Equivalence (T f R).
+ Proof. apply Equivalence_T. apply refl_t. apply square_t. apply converse_t. Qed.
  Corollary Equivalence_bisim: Equivalence (gfp b).
  Proof. apply Equivalence_t. Qed.
 
  (** * Context closure *)
 
  (** ** prefix *)
- Lemma prf_t a: unary_ctx (prf a) <= t.
+ Lemma ctx_prf_t a: unary_ctx (prf a) <= t.
  Proof.
-   assert (H: unary_ctx (prf a) <= s).
-    intro R. apply leq_unary_ctx. intros p q Hpq.
-    intros l p' pp'. inverse_trans. eauto with ccs. 
    apply Coinduction, by_Symmetry. apply unary_sym.
-    rewrite H at 1. now rewrite <-b_T.
+   rewrite <-b_T.
+   intro R. apply (leq_unary_ctx (prf a)). intros p q Hpq.
+   intros l p' pp'. inverse_trans. eauto with ccs. 
  Qed.
- Global Instance prft_t a: forall R, Proper (t R ==> t R) (prf a) := unary_proper (@prf_t a).
+ Global Instance prf_t a: forall R, Proper (t R ==> t R) (prf a) := unary_proper_t (@ctx_prf_t a).
 
  (** ** name restriction *)
- Lemma new_t a: unary_ctx (new a) <= t.
+ Lemma ctx_new_t a: unary_ctx (new a) <= t.
  Proof.
    apply Coinduction, by_Symmetry. apply unary_sym.
    intro R. apply (leq_unary_ctx (new a)). intros p q Hpq l p0 Hp0.
    inverse_trans. destruct (proj1 Hpq _ _ H1) as [???]. eexists. eauto with ccs.
-   apply (id_t B). now apply in_unary_ctx.
+   now apply unary_proper_Tctx, (id_T b).
  Qed.
- Global Instance newt_t a: forall R, Proper (t R ==> t R) (new a) := unary_proper (@new_t a).
+ Global Instance new_t a: forall R, Proper (t R ==> t R) (new a) := unary_proper_t (@ctx_new_t a).
 
  (** ** choice *)
- Lemma pls_t: binary_ctx pls <= t.
+ Lemma ctx_pls_t: binary_ctx pls <= t.
  Proof.
    apply Coinduction, by_Symmetry. apply binary_sym.
    intro R. apply (leq_binary_ctx pls).
@@ -199,11 +198,11 @@ Module CCS(Export M: N).
    destruct (proj1 Hpq _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
    destruct (proj1 Hrs _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
  Qed.
- Global Instance plst_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper pls_t.
+ Global Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
  
  (** ** parallel composition *)
  (** Lemma 8.1 *)
- Lemma par_t: binary_ctx par <= t.
+ Lemma ctx_par_t: binary_ctx par <= t.
  Proof.
    apply Coinduction, by_Symmetry. apply binary_sym.
    intro R. apply (leq_binary_ctx par).
@@ -219,7 +218,8 @@ Module CCS(Export M: N).
     destruct (proj1 Hrs _ _ H0) as [? ? ?]. eexists. eauto with ccs.
     apply (fTf_Tf b). apply (in_binary_ctx par); now apply (id_T b).     
  Qed.
- Global Instance part_t: forall R, Proper (t R ==> t R ==> t R) par := binary_proper par_t.
+ Global Instance par_t: forall R, Proper (t R ==> t R ==> t R) par := binary_proper_t ctx_par_t.
+ Global Instance par_T f: forall R, Proper (T f R ==> T f R ==> T f R) par := binary_proper_T ctx_par_t.
  
  (** ** replication (the challenging operation) *)
 
@@ -271,22 +271,20 @@ Module CCS(Export M: N).
      (note that we do not need Lemma 8.3 as in the paper: we
      use instead the more general fact that we can reason up to
      equivalence [Equivalence_t] and that [~ <= t R]) *)
- Lemma rep_t: unary_ctx rep <= t.
+ Lemma ctx_rep_t: unary_ctx rep <= t.
  Proof.
    apply Coinduction, by_Symmetry. apply unary_sym.
    intro R. apply (leq_unary_ctx rep). intros p q Hpq l p0 Hp0.
    apply rep_trans in Hp0 as [p1 ppp1 p0p1]. 
    assert (H: b (t R) (par p p) (par q q)).
-    apply (compat_t b). apply par_t. now apply in_binary_ctx. 
+    apply (compat_t b). now apply par_t; apply (id_t b). 
    destruct (proj1 H _ _ ppp1) as [q1 qqq1 p1q1].
    apply rep_trans' in qqq1 as [q0 Hq0 q0q1].
    eexists. eassumption.
    rewrite p0p1, q0q1.
-   apply (ftT_T _ par_t). apply (in_binary_ctx par). 
-    apply (fTf_Tf b). apply (in_unary_ctx rep). now apply (b_T b).
-    now apply (t_T b). 
+   apply par_T. apply unary_proper_Tctx. now apply (b_T b). now apply (t_T b). 
  Qed.
- Global Instance rept_t: forall R, Proper (t R ==> t R) rep := unary_proper rep_t.
+ Global Instance rep_t: forall R, Proper (t R ==> t R) rep := unary_proper_t ctx_rep_t.
 
  (** more laws  *)
  
@@ -294,11 +292,11 @@ Module CCS(Export M: N).
  Proof. now rewrite parC, par0p. Qed.
 
  Instance par_Associative R: Associative (t R) par.
- Proof. intros ???. refine (@gfp_t _ _ _ R _ _ _). apply parA. Qed.
+ Proof. intros ???. apply (gfp_t b), parA. Qed.
  Instance par_Commutative R: Commutative (t R) par.
- Proof. intros ??. refine (@gfp_t _ _ _ R _ _ _). apply parC. Qed.
+ Proof. intros ??. apply (gfp_t b), parC. Qed.
  Instance par_Unit R: Unit (t R) par 0%ccs.
- Proof. split; intro; refine (@gfp_t _ _ _ R _ _ _). apply par0p. apply parp0. Qed.
+ Proof. split; intro; apply (gfp_t b). apply par0p. apply parp0. Qed.
 
  Lemma plsC: forall p q, p+q ~ q+p.
  Proof.
@@ -323,11 +321,11 @@ Module CCS(Export M: N).
  Proof. now rewrite plsC, pls0p. Qed.   
 
  Instance pls_Associative R: Associative (t R) pls.
- Proof. intros ???. refine (@gfp_t _ _ _ R _ _ _). apply plsA. Qed.
+ Proof. intros ???. apply (gfp_t b), plsA. Qed.
  Instance pls_Commutative R: Commutative (t R) pls.
- Proof. intros ??. refine (@gfp_t _ _ _ R _ _ _). apply plsC. Qed.
+ Proof. intros ??. apply (gfp_t b), plsC. Qed.
  Instance pls_Unit R: Unit (t R) pls 0%ccs.
- Proof. split; intro; refine (@gfp_t _ _ _ R _ _ _). apply pls0p. apply plsp0. Qed.
+ Proof. split; intro; apply (gfp_t b). apply pls0p. apply plsp0. Qed.
  
  Lemma plsI p: p+p ~ p.
  Proof.
@@ -469,9 +467,9 @@ Module CCS(Export M: N).
  (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [t R] or [T f R]
     in order to improve compilation time, we use the following notation and duplicate of [unfold_rep]
     TODO: fix this in a more satisfactory way. *)
- Notation "` H" := (rel_gfp_t (b:=b) _ H) (at level 2).
+ Notation "` H" := (subrelation_gfp_t (b:=b) _ H) (at level 2).
  Lemma unfold_rep' R p: t R (!p) (!p \| p).
- Proof. apply rel_gfp_t, unfold_rep. Qed.
+ Proof. apply subrelation_gfp_t, unfold_rep. Qed.
  
  Lemma rep_pls p q: !(p+q) ~ !p \| !q.
  Proof.
@@ -550,9 +548,9 @@ Module CCS(Export M: N).
    assert (BP': freshp b (0 \| p)) by now repeat constructor. 
    coinduction R H.
    split; intros l p' pp'; simpl; inverse_trans'; try congruence; 
-     eexists; eauto with ccs; rewrite `H1; clear H1; aac_rewrite H; apply part_t; trivial;
+     eexists; eauto with ccs; rewrite `H1; clear H1; aac_rewrite H; apply par_t; trivial;
        (* last step just to improve setoid_rewriting performances *)
-       apply rel_gfp_t.
+       apply subrelation_gfp_t.
    - rewrite <-prf_prf_tau_new_i by assumption.
      rewrite new_gc by assumption.
      aac_reflexivity.
@@ -565,8 +563,8 @@ Module CCS(Export M: N).
    - rewrite <-prf_prf_tau_new_o by assumption. 
      rewrite new_gc by assumption.
      aac_reflexivity.
- Qed.   
- 
+ Qed.
+
 End CCS.
 
 (** * A proof by enhanced coinduction  *)
@@ -601,14 +599,14 @@ Proof. intro. rewrite dC, dD. split; intros ? ? T; inversion_clear T; eauto with
 (** the proof by enhanced bisimulation *)
 Goal A ~ B /\ C ~ D.
   coinduction R [AB CD]. split.
-  apply bAB. now rewrite CD.     (* apply prft_t. now symmetry.  *)
-  apply bCD. now rewrite AB, CD. (* now apply part_t.  *)
+  apply bAB. now rewrite CD.     (* apply prf_t. now symmetry.  *)
+  apply bCD. now rewrite AB, CD. (* now apply par_t.  *)
 Qed.
 
 (** refining the candidate on-the-fly, using the [accumulate] tactic *)
 Goal A ~ B.
   coinduction R AB.
-  apply bAB. apply prft_t.
+  apply bAB. apply prf_t.
   symmetry. accumulate CD. 
   apply bCD. now rewrite AB, CD. 
 Qed.
