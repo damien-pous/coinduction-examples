@@ -1,7 +1,9 @@
 -arg -w -arg -undo-batch-mode
+-arg -w -arg -projection-no-head-constant
 
 -R . CoinductionExamples
 
 divergence.v
+automata.v
 streams.v
 ccs.v

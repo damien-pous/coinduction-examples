@@ -6,11 +6,13 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
  - a formalisation of Hur et al's toy example on divergence 
  - a formalisation of Rutten's stream calculus
  - a formalisation of Milner's calculus of communicating systems (CCS)
+ - a formalisation of automata and regular expression equivalence
  
 ## Modules
  + `divergence.v`  : Hur et al's example on divergence 
  + `streams.v`     : Rutten's stream calculus 
  + `ccs.v`         : Milner's CCS 
+ + `automata.v`    : Automata equivalence 
 
 ## Meta
 
