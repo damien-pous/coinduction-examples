@@ -178,17 +178,16 @@ Module CCS(Export M: N).
  Lemma ctx_prf_t a: unary_ctx (prf a) <= t.
  Proof.
    apply Coinduction, by_Symmetry. apply unary_sym.
-   rewrite <-b_T.
-   intro R. apply (leq_unary_ctx (prf a)). intros p q Hpq.
-   intros l p' pp'. inverse_trans. eauto with ccs. 
+   rewrite <-b_T. apply unary_ctx_b.
+   intros R p q Hpq l p' pp'. inverse_trans. eauto with ccs. 
  Qed.
  Global Instance prf_t a: forall R, Proper (t R ==> t R) (prf a) := unary_proper_t (@ctx_prf_t a).
 
  (** ** name restriction *)
  Lemma ctx_new_t a: unary_ctx (new a) <= t.
  Proof.
-   apply Coinduction, by_Symmetry. apply unary_sym.
-   intro R. apply (leq_unary_ctx (new a)). intros p q Hpq l p0 Hp0.
+   apply unary_ctx_t_sym. 
+   intros R p q Hpq l p0 Hp0.
    inverse_trans. destruct (proj1 Hpq _ _ H2) as [???]. eexists. eauto with ccs.
    now apply unary_proper_Tctx, (id_T b).
  Qed.
@@ -197,9 +196,8 @@ Module CCS(Export M: N).
  (** ** choice *)
  Lemma ctx_pls_t: binary_ctx pls <= t.
  Proof.
-   apply Coinduction, by_Symmetry. apply binary_sym.
-   intro R. apply (leq_binary_ctx pls).
-   intros p q Hpq r s Hrs l p0 Hp0. inverse_trans.
+   apply binary_ctx_t_sym.
+   intros R p q Hpq r s Hrs l p0 Hp0. inverse_trans.
    destruct (proj1 Hpq _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
    destruct (proj1 Hrs _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
  Qed.
@@ -209,9 +207,8 @@ Module CCS(Export M: N).
  (** Lemma 8.1 *)
  Lemma ctx_par_t: binary_ctx par <= t.
  Proof.
-   apply Coinduction, by_Symmetry. apply binary_sym.
-   intro R. apply (leq_binary_ctx par).
-   intros p q Hpq r s Hrs l p0 Hp0. inversion_clear Hp0.
+   apply binary_ctx_t_sym.
+   intros R p q Hpq r s Hrs l p0 Hp0. inversion_clear Hp0.
     destruct (proj1 Hpq _ _ H) as [? ? ?]. eexists. eauto with ccs.
     apply (fTf_Tf b). apply (in_binary_ctx par). now apply (id_T b). now apply (b_T b). 
     destruct (proj1 Hrs _ _ H) as [? ? ?]. eexists. eauto with ccs.
@@ -278,8 +275,8 @@ Module CCS(Export M: N).
      equivalence [Equivalence_t] and that [~ <= t R]) *)
  Lemma ctx_rep_t: unary_ctx rep <= t.
  Proof.
-   apply Coinduction, by_Symmetry. apply unary_sym.
-   intro R. apply (leq_unary_ctx rep). intros p q Hpq l p0 Hp0.
+   apply unary_ctx_t_sym.
+   intros R p q Hpq l p0 Hp0.
    apply rep_trans in Hp0 as [p1 ppp1 p0p1]. 
    assert (H: b (t R) (par p p) (par q q)).
     apply (compat_t b). now apply par_t; apply (id_t b). 

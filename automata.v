@@ -447,8 +447,8 @@ Section s.
  (** addition corresponds to a compatible function *)
  Lemma ctx_pls_t: binary_ctx pls <= t.
  Proof.
-   apply leq_t. intro R. apply (leq_binary_ctx pls).
-   intros x x' [Hx Hx'] y y' [Hy Hy'].
+   apply leq_t. apply binary_ctx_b. 
+   intros R x x' [Hx Hx'] y y' [Hy Hy'].
    split; cbn.
    - cbn in Hx, Hy. congruence.
    - intro. now apply in_binary_ctx. 
@@ -519,8 +519,8 @@ Section s.
  (** concatenation corresponds to a compatible function *)
  Lemma ctx_dot_t: binary_ctx dot <= t.
  Proof.
-   apply Coinduction. intro R. apply (leq_binary_ctx dot).
-   intros x x' [Hx Hx'] y y' Hy.
+   apply binary_ctx_t.
+   intros R x x' [Hx Hx'] y y' Hy.
    split.
    - destruct Hy as [Hy _]; cbn in *; congruence.
    - intro. cbn in Hx. cbn. rewrite Hx; case reps.

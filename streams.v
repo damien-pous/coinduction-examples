@@ -111,8 +111,8 @@ Module streams.
  (** addition corresponds to a compatible function *)
  Lemma ctx_plus_t: binary_ctx plus <= t.
  Proof.
-   apply leq_t. intro R. apply (leq_binary_ctx plus).
-   intros x x' [Hx Hx'] y y' [Hy Hy'].
+   apply leq_t. apply binary_ctx_b.
+   intros R x x' [Hx Hx'] y y' [Hy Hy'].
    split.
     simpl. congruence.
     simpl tl. now apply in_binary_ctx. 
@@ -227,9 +227,8 @@ Module streams.
  (** shuffle product is only compatible up-to *)
  Lemma ctx_shuf_t: binary_ctx shuf <= t. 
  Proof.
-   apply Coinduction. 
-   intro R. apply (leq_binary_ctx shuf). 
-   intros x x' Hx y y' Hy. split; ssimpl.
+   apply binary_ctx_t. 
+   intros R x x' Hx y y' Hy. split; ssimpl.
    f_equal. apply Hx. apply Hy.
    (* TOTHINK: would be nicer to do this by rewriting *)
    apply plus_T; apply binary_proper_Tctx.
@@ -305,9 +304,8 @@ Module streams.
  (** as for the shuffle product, convolution product is only compatible up to  *)
  Lemma ctx_mult_t: binary_ctx mult <= t. 
  Proof.
-   apply Coinduction. 
-   intro R. apply (leq_binary_ctx mult).
-   intros x x' Hx y y' Hy. split; msimpl.
+   apply binary_ctx_t. 
+   intros R x x' Hx y y' Hy. split; msimpl.
    f_equal. apply Hx. apply Hy.
    apply plus_T; apply binary_proper_Tctx. 
    apply (id_T b), Hx. 
