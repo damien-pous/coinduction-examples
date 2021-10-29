@@ -157,7 +157,7 @@ Module CCS(Export M: N).
  Proof.
    apply Coinduction, by_Symmetry. 
    intros R x z [y xy yz]. now exists y.
-   rewrite cap_l at 1. setoid_rewrite <-id_t. 
+   rewrite cap_l at 1. rewrite <-f_Tf. 
    intros R x z [y xy yz] l x' xx'.
    destruct (xy _ _ xx') as [y' yy' x'y']. 
    destruct (yz _ _ yy') as [z' zz' y'z'].
