@@ -27,11 +27,10 @@ Module streams.
  Notation bT := (bT b).
 
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Notation "x ≡[ R ] y" := (t R x y) (at level 80).
- Notation "x ≡ y" := (t _ x y) (at level 80). 
- Notation "x [≡] y" := (bt _ x y) (at level 80).
+ Infix "[~]" := (t _) (at level 70). 
+ Infix "{~}" := (bt b _) (at level 70). 
  
- (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [t R] or [T f R]
+ (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [[~]] and [T f R]
     in order to improve compilation time, we specialize the corresponding instances
     TODO: this is still not really efficient, fix this in a more satisfactory way (see more below). *)
  Local Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
