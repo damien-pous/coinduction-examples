@@ -11,8 +11,8 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
 ## Modules
  + `divergence.v`  : Hur et al's example on divergence 
  + `streams.v`     : Rutten's stream calculus 
- + `ccs.v`         : Milner's CCS 
- + `automata.v`    : Automata equivalence 
+ + `ccs.v`         : Milner's CCS, strong and weak bisimilarity 
+ + `automata.v`    : Automata equivalence, regular expressions 
 
 ## Meta
 
