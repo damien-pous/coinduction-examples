@@ -20,7 +20,7 @@ End N.
 Module CCS(Export M: N).
 
  (** CCS labels (or prefixes, they are the same) *)
- CoInductive label := tau | out(a: N) | inp(a: N).
+ Variant label := tau | out(a: N) | inp(a: N).
   
  (** CCS processes. Instead of using process constants, as in the paper, 
    we use a coinductive definition. In other words, we use Coq's corecursive 
@@ -105,9 +105,8 @@ Module CCS(Export M: N).
  Notation bt := (bt b).
  Notation bT := (bT b).
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Notation "x ≡[ R ] y" := (t R x y) (at level 79).
- Notation "x ≡ y" := (t _ x y) (at level 79). 
- Notation "x [≡] y" := (bt _ x y) (at level 79).
+ Notation "x [~] y" := (t _ x y) (at level 79). 
+ Notation "x {~} y" := (bt _ x y) (at level 79).
 
  
  (** Some valid laws  *)
@@ -125,13 +124,13 @@ Module CCS(Export M: N).
  Lemma parA: forall p q r, p ∥ (q ∥ r) ~ (p ∥ q) ∥ r.
  Proof.
    coinduction R H.
-   intros p q r; split; intros l p' pp'; simpl; inverse_trans; eauto with ccs.
+   intros p q r; split; intros l p' pp'; cbn; inverse_trans; eauto with ccs.
  Qed.
  
  Lemma par0p: forall p, 0 ∥ p ~ p.
  Proof.
    coinduction R H.
-   intros p; split; intros l p' pp'; simpl; inverse_trans; eauto with ccs.
+   intros p; split; intros l p' pp'; cbn; inverse_trans; eauto with ccs.
  Qed.
 
  (** we prove more laws below, but first we need to establish the validity of up-to congruence, i.e., with the companion, that for all R, [t R] is a congruence w.r.t. CCS operators.
@@ -143,9 +142,7 @@ Module CCS(Export M: N).
  Lemma refl_t: const eq <= t.
  Proof.
    apply leq_t. intro. change (eq <= b eq).
-   apply cap_spec. split. 
-    intros p q <- ? p'; eauto with ccs.
-    intros p q <- ? p'; eauto with ccs.
+   apply cap_spec. split; intros ?????; subst; eauto with ccs. 
  Qed.
 
  (** converse is compatible *)
@@ -228,7 +225,7 @@ Module CCS(Export M: N).
  (** preliminary results *)
  Lemma unfold_rep p: !p ~ !p ∥ p.
  Proof.
-   step. split; intros l p' pp'; simpl.
+   step. split; intros l p' pp'; cbn.
    inversion_clear pp'. eauto with ccs.
    eexists. constructor; eassumption. reflexivity.
  Qed.
@@ -310,13 +307,13 @@ Module CCS(Export M: N).
  Lemma plsA p q r: p+(q+r) ~ (p+q)+r.
  Proof.
    step.
-   split; intros l p' pp'; simpl; inverse_trans; eauto with ccs. 
+   split; intros l p' pp'; cbn; inverse_trans; eauto with ccs. 
  Qed.
 
  Lemma pls0p p: 0 + p ~ p.
  Proof.
    step.
-   split; intros l p' pp'; simpl; inverse_trans; eauto with ccs. 
+   split; intros l p' pp'; cbn; inverse_trans; eauto with ccs. 
  Qed.
    
  Lemma plsp0 p: p + 0 ~ p.
@@ -332,7 +329,7 @@ Module CCS(Export M: N).
  Lemma plsI p: p+p ~ p.
  Proof.
    step.
-   split; intros l p' pp'; simpl; inverse_trans; eauto with ccs. 
+   split; intros l p' pp'; cbn; inverse_trans; eauto with ccs. 
  Qed.
 
  Lemma new_new: forall a b p, new a (new b p) ~ new b (new a p).
@@ -345,31 +342,31 @@ Module CCS(Export M: N).
  Lemma new_zer: forall a, new a 0 ~ 0.
  Proof.
    intro. step. 
-   split; intros l' p' pp'; simpl; inverse_trans; eauto with ccs. 
+   split; intros l' p' pp'; cbn; inverse_trans; eauto with ccs. 
  Qed.
 
  Lemma new_prf: forall a l p, fresh a l -> new a (prf l p) ~ prf l (new a p).
  Proof.
    intros. step. 
-   split; intros l' p' pp'; simpl; inverse_trans; eauto with ccs. 
+   split; intros l' p' pp'; cbn; inverse_trans; eauto with ccs. 
  Qed.
 
  Lemma new_prf': forall a l p, ~ fresh a l -> new a (prf l p) ~ 0.
  Proof.
    intros. step. 
-   split; intros l' p' pp'; simpl; inverse_trans; eauto with ccs; tauto.
+   split; intros l' p' pp'; cbn; inverse_trans; eauto with ccs; tauto.
  Qed.
  
  Lemma new_sum: forall a p q, new a (p + q) ~ new a p + new a q.
  Proof.
    intros. step.
-   split; intros l' p' pp'; simpl; inverse_trans; eauto with ccs. 
+   split; intros l' p' pp'; cbn; inverse_trans; eauto with ccs. 
  Qed.
 
  Lemma prf_tau_new c p q: prf tau (new c (p ∥ q)) ~ new c (prf (out c) p ∥ prf (inp c) q).
  Proof.
    step.
-   split; intros l p' pp'; simpl; inverse_trans; eauto with ccs; congruence.
+   split; intros l p' pp'; cbn; inverse_trans; eauto with ccs; congruence.
  Qed.
 
  Lemma prf_prf_tau_new_o l c p q:
@@ -377,7 +374,7 @@ Module CCS(Export M: N).
    prf l (prf tau (new c (p ∥ q))) ~ new c (prf l (prf (out c) p) ∥ prf (inp c) q).
  Proof.
    intro H. step.
-   split; intros l' p' pp'; simpl; inverse_trans; try congruence;
+   split; intros l' p' pp'; cbn; inverse_trans; try congruence;
      eexists; eauto with ccs; apply prf_tau_new.
  Qed.
 
@@ -386,7 +383,7 @@ Module CCS(Export M: N).
    prf l (prf tau (new c (p ∥ q))) ~ new c (prf (out c) p ∥ prf l (prf (inp c) q)).
  Proof.
    intro H. step.
-   split; intros l' p' pp'; simpl; inverse_trans; try congruence;
+   split; intros l' p' pp'; cbn; inverse_trans; try congruence;
      eexists; eauto with ccs; apply prf_tau_new.
  Qed.
 
@@ -403,7 +400,7 @@ Module CCS(Export M: N).
  Proof.
    intros F l p' T. revert F.
    induction T; intro F; inversion F; subst; clear F;
-     try (split; [simpl; tauto|firstorder; constructor; trivial]).
+     try (split; [cbn; tauto|firstorder; constructor; trivial]).
    - intuition subst; trivial; constructor; tauto.
    - apply IHT. now repeat constructor.
  Qed.
@@ -412,7 +409,7 @@ Module CCS(Export M: N).
  Proof.
    intro a. coinduction R HR; intros p Hp.
    pose proof (freshp_trans Hp) as H.
-   split; intros l p' pp'; simpl. 
+   split; intros l p' pp'; cbn. 
    - inverse_trans. eexists. eauto with ccs. apply HR. eapply H; eauto with ccs. 
    - specialize (H _ _ pp') as [? ?]. eauto with ccs. 
  Qed.
@@ -434,7 +431,7 @@ Module CCS(Export M: N).
  Lemma new_par: forall a p q, freshp a q -> new a (p∥q) ~ (new a p) ∥ q.
  Proof.
    intro a. coinduction R HR. intros p q Hq.
-   split; intros l p' pp'; simpl; inverse_trans;
+   split; intros l p' pp'; cbn; inverse_trans;
      (match goal with
       | H: trans _ q _ |- _ => destruct (freshp_trans Hq H) as [??]
       | _ => idtac end);
@@ -476,14 +473,14 @@ Module CCS(Export M: N).
  Lemma rep_pls p q: !(p+q) ~ !p ∥ !q.
  Proof.
    coinduction R H.
-   split; intros a p' T; simpl; inverse_trans';
+   split; intros a p' T; cbn; inverse_trans';
      (eexists; [eauto with ccs|rewrite ?`H1, ?`H3, H; aac_reflexivity]).
  Qed.
 
  Lemma rep_invol p: !(!p) ~ !p.
  Proof.
    coinduction R H.
-   split; intros l p' T; simpl.
+   split; intros l p' T; cbn.
    - inverse_trans'.
      eexists. eauto with ccs. rewrite `H1, `H2. aac_rewrite<-(unfold_rep' R). rewrite H. aac_reflexivity.
      eexists. eauto with ccs. rewrite `H1, `H4. aac_rewrite<-(unfold_rep' R). rewrite H. aac_reflexivity. 
@@ -498,7 +495,7 @@ Module CCS(Export M: N).
  Lemma rep_par p q: !(p ∥ q) ~ !p ∥ !q.
  Proof.
    coinduction R H.
-   split; intros a p' T; simpl; inverse_trans';
+   split; intros a p' T; cbn; inverse_trans';
      (eexists; [eauto with ccs|rewrite ?`H1, ?`H3, H; repeat aac_rewrite <-(unfold_rep' R); aac_reflexivity]).
  Qed.
 
@@ -514,13 +511,13 @@ Module CCS(Export M: N).
  Proof.
    coinduction R H. split; intros b p' T.
    - apply rep_prf_trans in T as [<- E]. eexists. eauto with ccs. now rewrite E.
-   - inverse_trans. eexists. eauto with ccs. simpl. aac_reflexivity. 
+   - inverse_trans. eexists. eauto with ccs. cbn. aac_reflexivity. 
  Qed.
 
  Goal forall a p q, !prf a (p ∥ prf a q) ∥ !prf a (prf a p ∥ q) ~ !prf a p ∥ !prf a q.
  Proof.
    intros. coinduction R H.
-   split; intros b p' T; simpl; inverse_trans'.
+   split; intros b p' T; cbn; inverse_trans'.
    - eexists. apply t_par_l; eauto with ccs.
      rewrite `H1. aac_rewrite H. aac_rewrite <-(unfold_rep' R). aac_reflexivity.
    - eexists. apply t_par_r; eauto with ccs.
@@ -549,7 +546,7 @@ Module CCS(Export M: N).
    assert (BY': fresh b (out y)) by congruence.
    assert (BP': freshp b (0 ∥ p)) by now repeat constructor. 
    coinduction R H.
-   split; intros l p' pp'; simpl; inverse_trans'; try congruence; 
+   split; intros l p' pp'; cbn; inverse_trans'; try congruence; 
      eexists; eauto with ccs; rewrite `H1; clear H1; aac_rewrite H; apply par_t; trivial;
        (* last step just to improve setoid_rewriting performances *)
        apply subrelation_gfp_t.
@@ -614,9 +611,8 @@ Module CCS(Export M: N).
  Notation wbt := (coinduction.bt wb).
  Notation wbT := (coinduction.bT wb).
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Notation "x ≊[ R ] y" := (t R x y) (at level 80).
- Notation "x ≊ y" := (wt _ x y) (at level 80). 
- Notation "x [≊] y" := (wbt _ x y) (at level 80).
+ Notation "x [≊] y" := (wt _ x y) (at level 80). 
+ Notation "x {≊} y" := (wbt _ x y) (at level 80).
 
  
  (** [eq] is a post-fixpoint, thus [const eq] is below [wt] *)
