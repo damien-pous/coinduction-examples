@@ -162,9 +162,9 @@ Module CCS(Export M: N).
  Qed.
 
  (** thus bisimilarity, [t R], and [T f R] are always equivalence relations *)
- Global Instance Equivalence_t R: Equivalence (t R).
+ #[export] Instance Equivalence_t R: Equivalence (t R).
  Proof. apply Equivalence_t. apply refl_t. apply square_t. apply converse_t. Qed.
- Global Instance Equivalence_T f R: Equivalence (T f R).
+ #[export] Instance Equivalence_T f R: Equivalence (T f R).
  Proof. apply Equivalence_T. apply refl_t. apply square_t. apply converse_t. Qed.
  Corollary Equivalence_bisim: Equivalence (gfp b).
  Proof. apply Equivalence_t. Qed.
@@ -178,7 +178,7 @@ Module CCS(Export M: N).
    rewrite <-b_T. apply unary_ctx_b.
    intros R p q Hpq l p' pp'. inverse_trans. eauto with ccs. 
  Qed.
- Global Instance prf_t a: forall R, Proper (t R ==> t R) (prf a) := unary_proper_t (@ctx_prf_t a).
+ #[export] Instance prf_t a: forall R, Proper (t R ==> t R) (prf a) := unary_proper_t (@ctx_prf_t a).
 
  (** ** name restriction *)
  Lemma ctx_new_t a: unary_ctx (new a) <= t.
@@ -188,7 +188,7 @@ Module CCS(Export M: N).
    inverse_trans. destruct (proj1 Hpq _ _ H2) as [???]. eexists. eauto with ccs.
    now apply unary_proper_Tctx, (id_T b).
  Qed.
- Global Instance new_t a: forall R, Proper (t R ==> t R) (new a) := unary_proper_t (@ctx_new_t a).
+ #[export] Instance new_t a: forall R, Proper (t R ==> t R) (new a) := unary_proper_t (@ctx_new_t a).
 
  (** ** choice *)
  Lemma ctx_pls_t: binary_ctx pls <= t.
@@ -198,7 +198,7 @@ Module CCS(Export M: N).
    destruct (proj1 Hpq _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
    destruct (proj1 Hrs _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
  Qed.
- Global Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
+ #[export] Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
  
  (** ** parallel composition *)
  (** Lemma 8.1 *)
@@ -217,8 +217,8 @@ Module CCS(Export M: N).
     destruct (proj1 Hrs _ _ H0) as [? ? ?]. eexists. eauto with ccs.
     apply (fTf_Tf b). apply (in_binary_ctx par); now apply (id_T b).     
  Qed.
- Global Instance par_t: forall R, Proper (t R ==> t R ==> t R) par := binary_proper_t ctx_par_t.
- Global Instance par_T f: forall R, Proper (T f R ==> T f R ==> T f R) par := binary_proper_T ctx_par_t.
+ #[export] Instance par_t: forall R, Proper (t R ==> t R ==> t R) par := binary_proper_t ctx_par_t.
+ #[export] Instance par_T f: forall R, Proper (T f R ==> T f R ==> T f R) par := binary_proper_T ctx_par_t.
  
  (** ** replication (the challenging operation) *)
 
@@ -283,18 +283,18 @@ Module CCS(Export M: N).
    rewrite p0p1, q0q1.
    apply par_T. apply unary_proper_Tctx. now apply (b_T b). now apply (t_T b). 
  Qed.
- Global Instance rep_t: forall R, Proper (t R ==> t R) rep := unary_proper_t ctx_rep_t.
+ #[export] Instance rep_t: forall R, Proper (t R ==> t R) rep := unary_proper_t ctx_rep_t.
 
  (** more laws  *)
  
  Lemma parp0 p: p ∥ 0 ~ p.
  Proof. now rewrite parC, par0p. Qed.
 
- Instance par_Associative R: Associative (t R) par.
+ #[export] Instance par_Associative R: Associative (t R) par.
  Proof. intros ???. apply (gfp_t b), parA. Qed.
- Instance par_Commutative R: Commutative (t R) par.
+ #[export] Instance par_Commutative R: Commutative (t R) par.
  Proof. intros ??. apply (gfp_t b), parC. Qed.
- Instance par_Unit R: Unit (t R) par 0%ccs.
+ #[export] Instance par_Unit R: Unit (t R) par 0%ccs.
  Proof. split; intro; apply (gfp_t b). apply par0p. apply parp0. Qed.
 
  Lemma plsC: forall p q, p+q ~ q+p.
@@ -319,11 +319,11 @@ Module CCS(Export M: N).
  Lemma plsp0 p: p + 0 ~ p.
  Proof. now rewrite plsC, pls0p. Qed.   
 
- Instance pls_Associative R: Associative (t R) pls.
+ #[export] Instance pls_Associative R: Associative (t R) pls.
  Proof. intros ???. apply (gfp_t b), plsA. Qed.
- Instance pls_Commutative R: Commutative (t R) pls.
+ #[export] Instance pls_Commutative R: Commutative (t R) pls.
  Proof. intros ??. apply (gfp_t b), plsC. Qed.
- Instance pls_Unit R: Unit (t R) pls 0%ccs.
+ #[export] Instance pls_Unit R: Unit (t R) pls 0%ccs.
  Proof. split; intro; apply (gfp_t b). apply pls0p. apply plsp0. Qed.
  
  Lemma plsI p: p+p ~ p.
@@ -625,7 +625,7 @@ Module CCS(Export M: N).
  Qed.
 
  (** thus [wt R] is always reflexive *)
- Global Instance Reflexive_wt R: Reflexive (wt R).
+ #[export] Instance Reflexive_wt R: Reflexive (wt R).
  Proof. intro. now apply (ft_t refl_wt). Qed.
 
  (** we get the following law as a basic consequence *)
@@ -641,7 +641,7 @@ Module CCS(Export M: N).
  Proof. apply invol_t. Qed.
 
  (** thus [wt R] is always symmetric *)
- Global Instance Symmetric_wt R: Symmetric (wt R).
+ #[export] Instance Symmetric_wt R: Symmetric (wt R).
  Proof. intros ??. apply (ft_t converse_wt). Qed.
 
 
@@ -702,7 +702,7 @@ Module CCS(Export M: N).
  Lemma weak_game p q l p': wtrans l p p' -> p ≈ q -> exists2 q', p' ≈ q' & wtrans l q q'.
  Proof. intros pp' pq. apply weak_game_lr. now exists p. Qed.
 
- Global Instance Equivalence_wbisim: Equivalence (gfp wb).
+ #[export] Instance Equivalence_wbisim: Equivalence (gfp wb).
  Proof.
    split. apply Reflexive_wt. apply Symmetric_wt.
    assert (square (gfp wb) <= gfp wb) as H.

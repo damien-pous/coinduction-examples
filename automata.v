@@ -173,12 +173,12 @@ Section bisim.
  Qed.
  
  (** thus [t R] is always an equivalence relations *)
- Global Instance Equivalence_t R: Equivalence (t R).
+ #[export] Instance Equivalence_t R: Equivalence (t R).
  Proof.
    apply Equivalence_t.
    apply eq_t. apply square_t. apply converse_t. 
  Qed.
- Global Instance Equivalence_T f R: Equivalence (T f R).
+ #[export] Instance Equivalence_T f R: Equivalence (T f R).
  Proof.
    apply Equivalence_T.
    apply eq_t. apply square_t. apply converse_t. 
@@ -375,7 +375,7 @@ Section d.
      apply xx'.
      apply yy'.
  Qed.
- Global Instance app_t: forall R, Proper (t R ==> t R ==> t R) (@app _) := binary_proper_t ctx_app_t.
+ #[export] Instance app_t: forall R, Proper (t R ==> t R ==> t R) (@app _) := binary_proper_t ctx_app_t.
 
  (** moreover, list concatenation (which actually implements union), 
      is associative, commutative, idempotent *)
@@ -400,13 +400,13 @@ Section d.
    intros. now rewrite app_assoc. 
  Qed.
 
- Global Instance aac_appA R: Associative (t R) (@app _).
+ #[export] Instance aac_appA R: Associative (t R) (@app _).
  Proof. repeat intro. apply (gfp_t b), appA. Qed.
- Global Instance aac_appC R: Commutative (t R) (@app _).
+ #[export] Instance aac_appC R: Commutative (t R) (@app _).
  Proof. repeat intro. apply (gfp_t b), appC. Qed.
- Global Instance aac_appI R: Idempotent (t R) (@app _).
+ #[export] Instance aac_appI R: Idempotent (t R) (@app _).
  Proof. repeat intro. apply (gfp_t b), appI. Qed.
- Global Instance aac_appU R: Unit (t R) (@app _) [].
+ #[export] Instance aac_appU R: Unit (t R) (@app _) [].
  Proof. split; intro. reflexivity. now rewrite app_nil_end. Qed.
 
  (** declaring the above instances makes it possible to use the [aac_reflexivity] tactic to solve equations modulo ACI *)
@@ -591,9 +591,9 @@ Fixpoint lang (e: regex): language :=
 (** notation for language equivalent expressions *)
 Notation "e ≡ f" := (lang e == lang f) (at level 80).
 
-Instance lang_pls_weq: Proper (weq ==> weq ==> weq) lang_pls.
+#[export] Instance lang_pls_weq: Proper (weq ==> weq ==> weq) lang_pls.
 Proof. apply cup_weq. Qed.
-Instance lang_dot_weq: Proper (weq ==> weq ==> weq) lang_dot.
+#[export] Instance lang_dot_weq: Proper (weq ==> weq ==> weq) lang_dot.
 Proof.
   cbn. intros L L' HL K K' HK w.
   unfold lang_dot. setoid_rewrite HL. setoid_rewrite HK.
@@ -604,7 +604,7 @@ Proof.
   intros L L' HL i i' <-. induction i.
   reflexivity. now apply lang_dot_weq. 
 Qed.
-Instance lang_str_weq: Proper (weq ==> weq) lang_str.
+#[export] Instance lang_str_weq: Proper (weq ==> weq) lang_str.
 Proof.
   intros L L' HL. unfold lang_str.
   apply sup_weq. reflexivity. intro. now apply lang_itr_weq. 
@@ -820,16 +820,16 @@ Proof.
   - cbn in Hx, Hy. congruence.
   - intro. now apply in_binary_ctx. 
 Qed.
-Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
-Instance pls_T f: forall R, Proper (T f R ==> T f R ==> T f R) pls := binary_proper_T ctx_pls_t.
+#[export] Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
+#[export] Instance pls_T f: forall R, Proper (T f R ==> T f R ==> T f R) pls := binary_proper_T ctx_pls_t.
 
-Instance pls_Associative R: Associative (t R) pls.
+#[export] Instance pls_Associative R: Associative (t R) pls.
 Proof. intros ???. apply (gfp_t (b _)), plsA. Qed.
-Instance pls_Commutative R: Commutative (t R) pls.
+#[export] Instance pls_Commutative R: Commutative (t R) pls.
 Proof. intros ??. apply (gfp_t (b _)), plsC. Qed.
-Instance pls_Idempotent R: Idempotent (t R) pls.
+#[export] Instance pls_Idempotent R: Idempotent (t R) pls.
 Proof. intros ?. apply (gfp_t (b _)), plsI. Qed.
-Instance pls_Unit R: Unit (t R) pls 0.
+#[export] Instance pls_Unit R: Unit (t R) pls 0.
 Proof. split; intro; apply (gfp_t (b _)). apply pls0x. apply plsx0. Qed.
 
 Lemma dot0x: forall x, 0 · x ~ 0.
@@ -913,11 +913,11 @@ Proof.
     -- reflexivity.
     -- apply (id_T (b _)), Hy.
 Qed.
-Instance dot_t: forall R, Proper (t R ==> t R ==> t R) dot := binary_proper_t ctx_dot_t.
+#[export] Instance dot_t: forall R, Proper (t R ==> t R ==> t R) dot := binary_proper_t ctx_dot_t.
 
-Instance dot_Associative R: Associative (t R) dot.
+#[export] Instance dot_Associative R: Associative (t R) dot.
 Proof. intros ???. apply (gfp_t (b _)), dotA. Qed.
-Instance dot_Unit R: Unit (t R) dot 1.
+#[export] Instance dot_Unit R: Unit (t R) dot 1.
 Proof. split; intro; apply (gfp_t (b _)). apply dot1x. apply dotx1. Qed.
 
 (** a helper lemma *)
