@@ -595,7 +595,7 @@ Instance lang_pls_weq: Proper (weq ==> weq ==> weq) lang_pls.
 Proof. apply cup_weq. Qed.
 Instance lang_dot_weq: Proper (weq ==> weq ==> weq) lang_dot.
 Proof.
-  intros L L' HL K K' HK w.
+  cbn. intros L L' HL K K' HK w.
   unfold lang_dot. setoid_rewrite HL. setoid_rewrite HK.
   reflexivity.
 Qed.

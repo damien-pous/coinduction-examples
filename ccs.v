@@ -707,7 +707,7 @@ Module CCS(Export M: N).
    split. apply Reflexive_wt. apply Symmetric_wt.
    assert (square (gfp wb) <= gfp wb) as H.
     apply leq_gfp. apply symmetric_pfp.
-     now rewrite converse_square, cnv_gfp. 
+     rewrite converse_square. apply square. simpl. apply cnv_gfp. (* TODO: rework, coinduction.rel vs relationalgebra.rel *)
     intros x z [y xy yz] l x' xx'. 
     apply (gfp_pfp wb) in xy as [xy _].
     destruct (xy _ _ xx') as [y' yy' x'y'].
