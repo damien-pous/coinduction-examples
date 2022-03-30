@@ -33,9 +33,9 @@ Module streams.
  (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [[~]] and [T f R]
     in order to improve compilation time, we specialize the corresponding instances
     TODO: this is still not really efficient, fix this in a more satisfactory way (see more below). *)
- Local Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
- Instance subrelation_gfp_t_: forall R, subrelation (gfp b) (t R) := (@subrelation_gfp_t _ b).
- Instance subrelation_gfp_T_: forall f R, subrelation (gfp b) (T f R) := (@subrelation_gfp_T _ b).
+ #[local] Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
+ #[local] Instance subrelation_gfp_t_: forall R, subrelation (gfp b) (t R) := (@subrelation_gfp_t _ b).
+ #[local] Instance subrelation_gfp_T_: forall f R, subrelation (gfp b) (T f R) := (@subrelation_gfp_T _ b).
    
  (** [eq] is a post-fixpoint, thus [const eq] is below [t] *)
  Lemma eq_t: const eq <= t.
@@ -59,12 +59,12 @@ Module streams.
  Qed.
 
  (** thus [t R] and [T f R] are always equivalence relations *)
- Global Instance Equivalence_t R: Equivalence (t R).
+ #[export] Instance Equivalence_t R: Equivalence (t R).
  Proof.
    apply Equivalence_t.
    apply eq_t. apply square_t. apply converse_t. 
  Qed.
- Global Instance Equivalence_T f R: Equivalence (T f R).
+ #[export] Instance Equivalence_T f R: Equivalence (T f R).
  Proof.
    apply Equivalence_T.
    apply eq_t. apply square_t. apply converse_t. 
@@ -73,10 +73,10 @@ Module streams.
  Corollary Equivalence_bisim: Equivalence (gfp b).
  Proof Equivalence_t bot.
  
- Global Instance hd_bisim: Proper (gfp b ==> eq) hd.
+ #[export] Instance hd_bisim: Proper (gfp b ==> eq) hd.
  Proof. intros x y H. apply (gfp_pfp b), H. Qed.
 
- Global Instance tl_bisim: Proper (gfp b ==> gfp b) tl.
+ #[export] Instance tl_bisim: Proper (gfp b ==> gfp b) tl.
  Proof. intros x y H. apply (gfp_pfp b), H. Qed.
 
  (** * "constant" streams *)
@@ -116,8 +116,8 @@ Module streams.
     simpl. congruence.
     simpl tl. now apply in_binary_ctx. 
  Qed.
- Global Instance plus_t: forall R, Proper (t R ==> t R ==> t R) plus := binary_proper_t ctx_plus_t.
- Global Instance plus_T f: forall R, Proper (T f R ==> T f R ==> T f R) plus := binary_proper_T ctx_plus_t.
+ #[export] Instance plus_t: forall R, Proper (t R ==> t R ==> t R) plus := binary_proper_t ctx_plus_t.
+ #[export] Instance plus_T f: forall R, Proper (T f R ==> T f R ==> T f R) plus := binary_proper_T ctx_plus_t.
  
 
  (** * shuffle product *)
@@ -236,7 +236,7 @@ Module streams.
    apply (b_T b), Hx. 
    apply (id_T b), Hy. 
  Qed.
- Global Instance shuf_t: forall R, Proper (t R ==> t R ==> t R) shuf := binary_proper_t ctx_shuf_t. 
+ #[export] Instance shuf_t: forall R, Proper (t R ==> t R ==> t R) shuf := binary_proper_t ctx_shuf_t. 
  
  
  (** * convolution product *)
@@ -312,7 +312,7 @@ Module streams.
    rewrite (proj1 Hx). reflexivity. 
    apply (id_T b), Hy.
  Qed.
- Global Instance mult_t: forall R, Proper (t R ==> t R ==> t R) mult := binary_proper_t ctx_mult_t.
+ #[export] Instance mult_t: forall R, Proper (t R ==> t R ==> t R) mult := binary_proper_t ctx_mult_t.
  
  Lemma mult_plus_x: forall x y z, (y + z) * x ~ y*x + z*x.
  Proof.
