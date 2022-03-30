@@ -7,12 +7,14 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
  - a formalisation of Rutten's stream calculus
  - a formalisation of Milner's calculus of communicating systems (CCS)
  - a formalisation of automata and regular expression equivalence
+ - an example on how to use the companion to avoid the need for generalized parameterized coinduction
  
 ## Modules
  + `divergence.v`  : Hur et al's example on divergence 
  + `streams.v`     : Rutten's stream calculus 
  + `ccs.v`         : Milner's CCS, strong and weak bisimilarity 
  + `automata.v`    : Automata equivalence, regular expressions 
+ + `gpaco.v`       : generalized paco via the companion
 
 ## Meta
 
