@@ -23,7 +23,6 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
 - Coq-community maintainer(s):
   - Damien Pous ([**@damien-pous**](https://github.com/damien-pous))
 - License: [GNU LGPL](LICENSE)
-- Compatible Coq versions: 8.13 or later
 - Additional dependencies: coq-coinduction, and coq-aac-tactics for the CCS example
 - Coq namespace: `CoinductionExamples`
 - Related publication(s):
@@ -31,7 +30,7 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
 
 ## Building and installation instructions
 
-The easiest way to install the latest released version of Graph Theory
+The easiest way to install the latest released version of CoinductionExamples
 is via [OPAM](https://opam.ocaml.org/doc/Install.html):
 
 ```shell
