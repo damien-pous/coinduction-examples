@@ -9,7 +9,7 @@
 (* TOTHINK: algebraic definition of generating functions? *)
 
 From RelationAlgebra Require Import kat prop rel comparisons kat_tac rewriting.
-From Coinduction Require Import lattice coinduction rel tactics.
+From Coinduction Require Import lattice tower rel tactics.
 From AAC_tactics Require Import AAC.
 Set Implicit Arguments.
 
@@ -60,7 +60,7 @@ Module CCS(Export M: N).
  | t_rep: forall p l p', trans l (!p ∥ p) p' -> trans l (!p) p'
  .
  Global Hint Resolve t_prf t_par_l t_par_r t_par_lr t_par_rl t_new t_pls_l t_pls_r: ccs.
-
+ 
  Lemma t_rep': forall p l p', trans l p p' -> trans l (!p) (!p ∥ p').
  Proof. intros. apply t_rep; eauto with ccs. Qed.
  Global Hint Resolve t_rep': ccs.
@@ -100,13 +100,9 @@ Module CCS(Export M: N).
  Notation b := (cap s (comp converse (comp s converse))).
 
  Notation "p ~ q" := (gfp b p%ccs q%ccs) (at level 70).
- Notation t := (t b).
- Notation T := (T b).
- Notation bt := (bt b).
- Notation bT := (bT b).
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Notation "x [~] y" := (t _ x y) (at level 79). 
- Notation "x {~} y" := (bt _ x y) (at level 79).
+ Infix "[~]" := (`_) (at level 79). 
+ Infix "{~}" := (b `_) (at level 79).
 
  
  (** Some valid laws  *)
@@ -138,87 +134,63 @@ Module CCS(Export M: N).
  
  (** * Equivalence closure *)
  
- (** [eq] is a post-fixpoint, thus [const eq] is below [t] *)
- Lemma refl_t: const eq <= t.
+ (** elements of the final chain are equivalence relations *)
+ #[export] Instance Equivalence_t {R: Chain b}: Equivalence `R.
  Proof.
-   apply leq_t. intro. change (eq <= b eq).
-   apply cap_spec. split; intros ?????; subst; eauto with ccs. 
+   constructor; revert R.
+   - apply Reflexive_symchain. intros R HR x l x' xx'. now exists x'. 
+   - apply Symmetric_symchain. 
+   - apply Transitive_symchain. intros R HR x y z xy yz l x' xx'.
+     destruct (xy _ _ xx') as [y' yy' x'y']. 
+     destruct (yz _ _ yy') as [z' zz' y'z'].     
+     exists z'; trivial. now transitivity y'.
  Qed.
-
- (** converse is compatible *)
- Lemma converse_t: converse <= t.
- Proof. apply invol_t. Qed.
-
- (** so is squaring *)
- Lemma square_t: square <= t.
- Proof.
-   apply Coinduction, by_Symmetry. 
-   intros R x z [y xy yz]. now exists y.
-   rewrite cap_l at 1. rewrite <-f_Tf. 
-   intros R x z [y xy yz] l x' xx'.
-   destruct (xy _ _ xx') as [y' yy' x'y']. 
-   destruct (yz _ _ yy') as [z' zz' y'z'].
-   exists z'. assumption. eexists; eassumption.
- Qed.
-
- (** thus bisimilarity, [t R], and [T f R] are always equivalence relations *)
- #[export] Instance Equivalence_t R: Equivalence (t R).
- Proof. apply Equivalence_t. apply refl_t. apply square_t. apply converse_t. Qed.
- #[export] Instance Equivalence_T f R: Equivalence (T f R).
- Proof. apply Equivalence_T. apply refl_t. apply square_t. apply converse_t. Qed.
- Corollary Equivalence_bisim: Equivalence (gfp b).
- Proof. apply Equivalence_t. Qed.
 
  (** * Context closure *)
 
  (** ** prefix *)
- Lemma ctx_prf_t a: unary_ctx (prf a) <= t.
+ #[export] Instance prf_chain {a}: forall {R: Chain b}, Proper (`R ==> `R) (prf a).
  Proof.
-   apply Coinduction, by_Symmetry. apply unary_sym.
-   rewrite <-b_T. apply unary_ctx_b.
-   intros R p q Hpq l p' pp'. inverse_trans. eauto with ccs. 
+   apply (Proper_symchain 1).
+   intros R HR p q Hpq l p' pp'.
+   inverse_trans.
+   eexists. eauto with ccs.
+   now step. 
  Qed.
- #[export] Instance prf_t a: forall R, Proper (t R ==> t R) (prf a) := unary_proper_t (@ctx_prf_t a).
 
  (** ** name restriction *)
- Lemma ctx_new_t a: unary_ctx (new a) <= t.
+ #[export] Instance new_chain {a}: forall {R: Chain b}, Proper (`R ==> `R) (new a).
  Proof.
-   apply unary_ctx_t_sym. 
-   intros R p q Hpq l p0 Hp0.
-   inverse_trans. destruct (proj1 Hpq _ _ H2) as [???]. eexists. eauto with ccs.
-   now apply unary_proper_Tctx, (id_T b).
+   apply (Proper_symchain 1).
+   intros R HR p q Hpq l p' pp'.
+   inverse_trans. destruct (proj1 Hpq _ _ H2) as [???].
+   eexists. eauto with ccs. now apply HR. 
  Qed.
- #[export] Instance new_t a: forall R, Proper (t R ==> t R) (new a) := unary_proper_t (@ctx_new_t a).
 
  (** ** choice *)
- Lemma ctx_pls_t: binary_ctx pls <= t.
+ #[export] Instance pls_chain: forall {R: Chain b}, Proper (`R ==> `R ==> `R) pls.
  Proof.
-   apply binary_ctx_t_sym.
-   intros R p q Hpq r s Hrs l p0 Hp0. inverse_trans.
-   destruct (proj1 Hpq _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
-   destruct (proj1 Hrs _ _ H3) as [? ? ?]. eexists. eauto with ccs. now apply (id_T b).
+   apply (Proper_symchain 2).
+   intros R HR p q Hpq r s Hrs l p0 Hp0.
+   inverse_trans.
+   destruct (proj1 Hpq _ _ H3). eauto with ccs. 
+   destruct (proj1 Hrs _ _ H3). eauto with ccs.
  Qed.
- #[export] Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
  
  (** ** parallel composition *)
  (** Lemma 8.1 *)
- Lemma ctx_par_t: binary_ctx par <= t.
+ #[export] Instance par_chain: forall {R: Chain b}, Proper (`R ==> `R ==> `R) par.
  Proof.
-   apply binary_ctx_t_sym.
-   intros R p q Hpq r s Hrs l p0 Hp0. inversion_clear Hp0.
-    destruct (proj1 Hpq _ _ H) as [? ? ?]. eexists. eauto with ccs.
-    apply (fTf_Tf b). apply (in_binary_ctx par). now apply (id_T b). now apply (b_T b). 
-    destruct (proj1 Hrs _ _ H) as [? ? ?]. eexists. eauto with ccs.
-    apply (fTf_Tf b). apply (in_binary_ctx par). now apply (b_T b). now apply (id_T b). 
-    destruct (proj1 Hpq _ _ H) as [? ? ?].
-    destruct (proj1 Hrs _ _ H0) as [? ? ?]. eexists. eauto with ccs.
-    apply (fTf_Tf b). apply (in_binary_ctx par); now apply (id_T b).     
-    destruct (proj1 Hpq _ _ H) as [? ? ?].
-    destruct (proj1 Hrs _ _ H0) as [? ? ?]. eexists. eauto with ccs.
-    apply (fTf_Tf b). apply (in_binary_ctx par); now apply (id_T b).     
+   apply (Proper_symchain 2).
+   intros R HR p q Hpq r s Hrs l p0 Hp0.
+   inversion_clear Hp0.
+    destruct (proj1 Hpq _ _ H). eexists. eauto with ccs. apply HR; auto. now step. 
+    destruct (proj1 Hrs _ _ H). eexists. eauto with ccs. apply HR; auto. now step. 
+    destruct (proj1 Hpq _ _ H).
+    destruct (proj1 Hrs _ _ H0). eexists. eauto with ccs. now apply HR. 
+    destruct (proj1 Hpq _ _ H).
+    destruct (proj1 Hrs _ _ H0). eexists. eauto with ccs. now apply HR. 
  Qed.
- #[export] Instance par_t: forall R, Proper (t R ==> t R ==> t R) par := binary_proper_t ctx_par_t.
- #[export] Instance par_T f: forall R, Proper (T f R ==> T f R ==> T f R) par := binary_proper_T ctx_par_t.
  
  (** ** replication (the challenging operation) *)
 
@@ -270,32 +242,32 @@ Module CCS(Export M: N).
      (note that we do not need Lemma 8.3 as in the paper: we
      use instead the more general fact that we can reason up to
      equivalence [Equivalence_t] and that [~ <= t R]) *)
- Lemma ctx_rep_t: unary_ctx rep <= t.
+ #[export] Instance rep_chain: forall {R: Chain b}, Proper (`R ==> `R) rep.
  Proof.
-   apply unary_ctx_t_sym.
-   intros R p q Hpq l p0 Hp0.
+   apply (Proper_symchain 1).
+   intros R HR p q Hpq l p0 Hp0.
    apply rep_trans in Hp0 as [p1 ppp1 p0p1]. 
-   assert (H: b (t R) (par p p) (par q q)).
-    apply (compat_t b). now apply par_t; apply (id_t b). 
+   assert (H: b `R (par p p) (par q q)) by now apply par_chain.
    destruct (proj1 H _ _ ppp1) as [q1 qqq1 p1q1].
    apply rep_trans' in qqq1 as [q0 Hq0 q0q1].
    eexists. eassumption.
-   rewrite p0p1, q0q1.
-   apply par_T. apply unary_proper_Tctx. now apply (b_T b). now apply (t_T b). 
+   now rewrite p0p1, q0q1, Hpq, p1q1.
  Qed.
- #[export] Instance rep_t: forall R, Proper (t R ==> t R) rep := unary_proper_t ctx_rep_t.
 
  (** more laws  *)
  
  Lemma parp0 p: p ∥ 0 ~ p.
  Proof. now rewrite parC, par0p. Qed.
 
- #[export] Instance par_Associative R: Associative (t R) par.
- Proof. intros ???. apply (gfp_t b), parA. Qed.
- #[export] Instance par_Commutative R: Commutative (t R) par.
- Proof. intros ??. apply (gfp_t b), parC. Qed.
- #[export] Instance par_Unit R: Unit (t R) par 0%ccs.
- Proof. split; intro; apply (gfp_t b). apply par0p. apply parp0. Qed.
+ Section s.
+ Context {R: Chain b}.
+ #[export] Instance par_Associative: Associative `R par.
+ Proof. intros ???. now rewrite parA. Qed.
+ #[export] Instance par_Commutative: Commutative `R par.
+ Proof. intros ??. now rewrite parC. Qed.
+ #[export] Instance par_Unit: Unit `R par 0%ccs.
+ Proof. split; intro; now rewrite ?par0p, ?parp0. Qed.
+ End s.
 
  Lemma plsC: forall p q, p+q ~ q+p.
  Proof.
@@ -305,6 +277,12 @@ Module CCS(Export M: N).
  Qed.
 
  Lemma plsA p q r: p+(q+r) ~ (p+q)+r.
+ Proof.
+   step.
+   split; intros l p' pp'; cbn; inverse_trans; eauto with ccs. 
+ Qed.
+ 
+ Lemma plsI p: p+p ~ p.
  Proof.
    step.
    split; intros l p' pp'; cbn; inverse_trans; eauto with ccs. 
@@ -319,18 +297,17 @@ Module CCS(Export M: N).
  Lemma plsp0 p: p + 0 ~ p.
  Proof. now rewrite plsC, pls0p. Qed.   
 
- #[export] Instance pls_Associative R: Associative (t R) pls.
- Proof. intros ???. apply (gfp_t b), plsA. Qed.
- #[export] Instance pls_Commutative R: Commutative (t R) pls.
- Proof. intros ??. apply (gfp_t b), plsC. Qed.
- #[export] Instance pls_Unit R: Unit (t R) pls 0%ccs.
- Proof. split; intro; apply (gfp_t b). apply pls0p. apply plsp0. Qed.
- 
- Lemma plsI p: p+p ~ p.
- Proof.
-   step.
-   split; intros l p' pp'; cbn; inverse_trans; eauto with ccs. 
- Qed.
+ Section s.
+ Context {R: Chain b}.
+ #[export] Instance pls_Associative: Associative `R pls.
+ Proof. intros ???. now rewrite plsA. Qed.
+ #[export] Instance pls_Commutative: Commutative `R pls.
+ Proof. intros ??. now rewrite plsC. Qed.
+ #[export] Instance pls_Idempotent: Idempotent `R pls%ccs.
+ Proof. repeat intro; now rewrite plsI. Qed.
+ #[export] Instance pls_Unit: Unit `R pls 0%ccs.
+ Proof. split; intro; now rewrite ?pls0p, ?plsp0. Qed.
+ End s.
 
  Lemma new_new: forall a b p, new a (new b p) ~ new b (new a p).
  Proof.
@@ -462,19 +439,12 @@ Module CCS(Export M: N).
      end
    | _ => idtac
    end.
-
- (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [t R] or [T f R]
-    in order to improve compilation time, we use the following notation and duplicate of [unfold_rep]
-    TODO: fix this in a more satisfactory way. *)
- Notation "` H" := (subrelation_gfp_t (b:=b) _ H) (at level 2).
- Lemma unfold_rep' R p: t R (!p) (!p ∥ p).
- Proof. apply subrelation_gfp_t, unfold_rep. Qed.
  
  Lemma rep_pls p q: !(p+q) ~ !p ∥ !q.
  Proof.
    coinduction R H.
    split; intros a p' T; cbn; inverse_trans';
-     (eexists; [eauto with ccs|rewrite ?`H1, ?`H3, H; aac_reflexivity]).
+     (eexists; [eauto with ccs|rewrite ?H1, ?H3, H; aac_reflexivity]).
  Qed.
 
  Lemma rep_invol p: !(!p) ~ !p.
@@ -482,11 +452,11 @@ Module CCS(Export M: N).
    coinduction R H.
    split; intros l p' T; cbn.
    - inverse_trans'.
-     eexists. eauto with ccs. rewrite `H1, `H2. aac_rewrite<-(unfold_rep' R). rewrite H. aac_reflexivity.
-     eexists. eauto with ccs. rewrite `H1, `H4. aac_rewrite<-(unfold_rep' R). rewrite H. aac_reflexivity. 
-     eexists. eauto with ccs. rewrite `H3, `H2, `H4. do 2 aac_rewrite<-(unfold_rep' R). rewrite H. aac_reflexivity.     
+     eexists. eauto with ccs. rewrite H1, H2. aac_rewrite<-unfold_rep. rewrite H. aac_reflexivity.
+     eexists. eauto with ccs. rewrite H1, H4. aac_rewrite<-unfold_rep. rewrite H. aac_reflexivity. 
+     eexists. eauto with ccs. rewrite H3, H2, H4. do 2 aac_rewrite<-unfold_rep. rewrite H. aac_reflexivity.     
    - destruct (rep_trans T) as [? _ E].
-     eexists. eauto with ccs. rewrite `E. aac_rewrite<-(unfold_rep' R). rewrite H. aac_reflexivity. 
+     eexists. eauto with ccs. rewrite E. aac_rewrite<-unfold_rep. rewrite H. aac_reflexivity. 
  Qed.
 
  Lemma rep_idem p: !p ~ !p ∥ !p.
@@ -496,7 +466,7 @@ Module CCS(Export M: N).
  Proof.
    coinduction R H.
    split; intros a p' T; cbn; inverse_trans';
-     (eexists; [eauto with ccs|rewrite ?`H1, ?`H3, H; repeat aac_rewrite <-(unfold_rep' R); aac_reflexivity]).
+     (eexists; [eauto with ccs|rewrite ?H1, ?H3, H; repeat aac_rewrite <-unfold_rep; aac_reflexivity]).
  Qed.
 
  Lemma rep_prf_trans a p b p': trans b (!prf a p) p' -> a=b /\ p' ~ p ∥ !prf a p.
@@ -519,13 +489,13 @@ Module CCS(Export M: N).
    intros. coinduction R H.
    split; intros b p' T; cbn; inverse_trans'.
    - eexists. apply t_par_l; eauto with ccs.
-     rewrite `H1. aac_rewrite H. aac_rewrite <-(unfold_rep' R). aac_reflexivity.
+     rewrite H1. aac_rewrite H. aac_rewrite <-unfold_rep. aac_reflexivity.
    - eexists. apply t_par_r; eauto with ccs.
-     rewrite `H1. aac_rewrite H. aac_rewrite <-(unfold_rep' R). aac_reflexivity.
+     rewrite H1. aac_rewrite H. aac_rewrite <-unfold_rep. aac_reflexivity.
    - eexists. apply t_par_l; eauto with ccs.
-     rewrite `H1. aac_rewrite H. aac_rewrite <-(unfold_rep' R). aac_reflexivity.
+     rewrite H1. aac_rewrite H. aac_rewrite <-unfold_rep. aac_reflexivity.
    - eexists. apply t_par_r; eauto with ccs.
-     rewrite `H1. aac_rewrite H. aac_rewrite <-(unfold_rep' R). aac_reflexivity.
+     rewrite H1. aac_rewrite H. aac_rewrite <-unfold_rep. aac_reflexivity.
  Qed.
 
  Infix ">>" := (prf) (at level 30, right associativity): ccs_scope. 
@@ -547,9 +517,9 @@ Module CCS(Export M: N).
    assert (BP': freshp b (0 ∥ p)) by now repeat constructor. 
    coinduction R H.
    split; intros l p' pp'; cbn; inverse_trans'; try congruence; 
-     eexists; eauto with ccs; rewrite `H1; clear H1; aac_rewrite H; apply par_t; trivial;
+     eexists; eauto with ccs; rewrite H1; clear H1; aac_rewrite H; apply par_chain; trivial;
        (* last step just to improve setoid_rewriting performances *)
-       apply subrelation_gfp_t.
+       apply sub_gfp_Chain.
    - rewrite <-prf_prf_tau_new_i by assumption.
      rewrite new_gc by assumption.
      aac_reflexivity.
@@ -606,28 +576,20 @@ Module CCS(Export M: N).
  Notation wb := (cap w (comp converse (comp w converse))).
 
  Notation "p ≈ q" := (gfp wb p%ccs q%ccs) (at level 70).
- Notation wt := (coinduction.t wb).
- Notation wT := (coinduction.t wb).
- Notation wbt := (coinduction.bt wb).
- Notation wbT := (coinduction.bT wb).
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Notation "x [≊] y" := (wt _ x y) (at level 80). 
- Notation "x {≊} y" := (wbt _ x y) (at level 80).
+ Infix "[≊]" := (elem (b:=wb) _) (at level 80). 
+ Infix "{≊}" := (wb (elem (b:=wb) _)) (at level 80).
+
+ (** elements of the final chain are reflexive and symmetric *)
+ #[export] Instance Reflexive_wt: forall {R: Chain wb}, Reflexive `R.
+ Proof.
+   apply Reflexive_symchain. 
+   intros R HR x l x' xx'. exists x'; eauto with ccs. 
+ Qed.
+ #[export] Instance Symmetric_wt: forall {R: Chain wb}, Symmetric `R.
+ Proof. apply Symmetric_symchain. Qed.
 
  
- (** [eq] is a post-fixpoint, thus [const eq] is below [wt] *)
- Lemma refl_wt: const eq <= wt.
- Proof.
-   apply leq_t. intro. change (eq <= wb eq).
-   apply cap_spec. split. 
-    intros p q <- ? p'; eauto with ccs.
-    intros p q <- ? p'; eauto with ccs.
- Qed.
-
- (** thus [wt R] is always reflexive *)
- #[export] Instance Reflexive_wt R: Reflexive (wt R).
- Proof. intro. now apply (ft_t refl_wt). Qed.
-
  (** we get the following law as a basic consequence *)
  Lemma weak_tau p: p ≈ prf tau p.
  Proof.
@@ -636,18 +598,10 @@ Module CCS(Export M: N).
    - intros l p' H. inverse_trans. exists p'; eauto with ccs. cbn. reflexivity. 
  Qed.
 
- (** converse is compatible *)
- Lemma converse_wt: converse <= wt.
- Proof. apply invol_t. Qed.
-
- (** thus [wt R] is always symmetric *)
- #[export] Instance Symmetric_wt R: Symmetric (wt R).
- Proof. intros ??. apply (ft_t converse_wt). Qed.
-
 
  (** but squaring is not compatible and [t R] is not always transitive, 
      as soon as there is at least one channel name *)
- Lemma not_Transitive_wt: N -> ~ forall R, Transitive (wt R).
+ Lemma not_Transitive_wt: N -> ~ forall R: Chain wb, Transitive `R.
  Proof.
    intros a H.
    cut (prf (out a) nil ≈ nil).
@@ -658,14 +612,8 @@ Module CCS(Export M: N).
     destruct N as [? N' ?]. inversion N'.
    rewrite weak_tau. coinduction R CIH. split.
     intros l p' pp'. inverse_trans. exists 0; auto with ccs.
-    rewrite (subrelation_gfp_t _ (weak_tau _)). assumption. 
+    rewrite weak_tau. assumption. 
     intros l q' qq'. inverse_trans. 
- Qed.
- 
- Lemma not_square_wt: N -> ~ square <= wt.
- Proof.
-   intros a H. elim (not_Transitive_wt a). intro R.
-   intros ? y ???. apply (ft_t H). now exists y.
  Qed.
 
  (** weak bisimilarity is nevertheless transitive, which we prove below *)
@@ -689,8 +637,13 @@ Module CCS(Export M: N).
      unfold wtrans; ka. 
  Qed.
 
- Lemma cnv_wt R: RelationAlgebra.lattice.weq ((wt R: hrel _ _)°) (wt R).
- Proof. apply RelationAlgebra.lattice.antisym; intros ???; now apply Symmetric_wt. Qed.
+ (* TODO: better interaction with RelationAlgebra *)
+ Lemma cnv_wt (R: Chain wb): RelationAlgebra.lattice.weq ((`R: hrel _ _)°) (`R).
+ Proof.
+   apply RelationAlgebra.lattice.antisym; intros ???.
+   now eapply Symmetric_wt.
+   now eapply Symmetric_wt in H.
+ Qed.
  Lemma cnv_gfp: RelationAlgebra.lattice.weq ((gfp wb: hrel _ _)°) (gfp wb).
  Proof. apply cnv_wt. Qed.
  
@@ -761,7 +714,7 @@ Qed.
 (** refining the candidate on-the-fly, using the [accumulate] tactic *)
 Goal A ~ B.
   coinduction R AB.
-  apply bAB. apply prf_t.
+  apply bAB. apply prf_chain.
   symmetry. accumulate CD. 
   apply bCD. now rewrite AB, CD. 
 Qed.

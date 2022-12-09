@@ -12,7 +12,7 @@ https://arxiv.org/abs/2001.02659
 
 Set Implicit Arguments.
 Set Primitive Projections.
-From Coinduction Require Import coinduction rel tactics.
+From Coinduction Require Import tower rel tactics.
 
 (** streams with internal actions *)
 Variant streamF streamF :=
@@ -47,37 +47,30 @@ Next Obligation.
 Qed.
 
 Infix "~" := (gfp b) (at level 70). 
-Notation t := (t b).
-Notation T := (T b).
-Notation bt := (bt b).
-Notation bT := (bT b).
-Notation "x ≃[ R ] y" := (t R x y) (at level 79).
-Notation "x ≃ y" := (t _ x y) (at level 79). 
-Notation "x [≃] y" := (bt _ x y) (at level 79).
+Notation "x ≃[ R ] y" := (`R x y) (at level 79).
+Notation "x ≃ y" := (`_ x y) (at level 79). 
+Notation "x [≃] y" := (b `_ x y) (at level 79).
 
-(** converse is compatible *)
-Lemma converse_t: converse <= t.
-Proof.
-  apply leq_t. cbv. intros S x y.
-  cut (forall x y, b' S y x -> b' (converse S) x y). now auto.
-  induction 1; constructor; auto.
-Qed.
-#[export] Instance Symmetric_t R: Symmetric (t R).
-Proof. intros x y. apply (ft_t converse_t). Qed.
 
-(** [eq] is a post-fixpoint, thus [const eq] is below [t] *)
-#[export] Instance Reflexive_b'eq {R} {HR: Reflexive R}: Reflexive (b' R).
+
+(** elements of the final chain are reflexive *)
+#[export] Instance Reflexive_b' {R} {HR: Reflexive R}: Reflexive (b' R).
 Proof. now intros [s|n s]; constructor. Qed.
-Lemma eq_t: const eq <= t.
+#[export] Instance Reflexive_t: forall {R: Chain b}, Reflexive `R.
+Proof. apply Reflexive_chain. now cbn. Qed.
+
+(** elements of the final chain are symmetric *)
+#[export] Instance Symmetric_t: forall {R: Chain b}, Symmetric `R.
 Proof.
-  apply leq_t. intro R. change (eq <= b eq). 
-  intros p ? <-. cbv. reflexivity. 
+  apply Symmetric_chain. 
+  intros R HR. 
+  assert (H: forall x y, b' `R y x -> b' `R x y)
+    by (induction 1; constructor; auto).
+  intros x y xy. now apply H.  
 Qed.
-#[export] Instance Reflexive_t R: Reflexive (t R).
-Proof. intro. now apply eq_t. Qed.
 
 Lemma unfold x: x ~ inj (obs x).
-Proof. now step. Qed.
+Proof. now step; cbn. Qed.
 
 (** the unsatisfactory proof (Figure 2) *)
 Goal x ~ y.
@@ -102,30 +95,14 @@ Goal x ~ y.
 Abort.
 
 (** we solve the issue by using an up-to technique: "up-to tau steps on the left"  *)
-Variant tauL' (R: rel): _ -> _ -> Prop :=
-| tauL_: forall s t, R s t -> tauL' R (TauF s) t.
-
-Program Definition tauL: mon rel := {| body R x y := tauL' R (obs x) y |}.
-Next Obligation.
-  cbv. intros R S H. destruct 1; constructor; auto.
-Qed.
-
-(** this technique is safe (below the companion)  *)
-Lemma tauL_t: tauL <= t.
+Proposition tau_l: forall {R: Chain b} x y, `R x y ->  `R (Tau x) y.
 Proof.
-  apply Coinduction. intros R x' y.
-  cut (forall x, tauL' (b R) x y -> b' (T tauL R) x (obs y)).
-   intro H. exact (H (obs x')).
-  clear x'. intro x. 
-  destruct 1. constructor.
-  revert H. apply b. apply id_T. 
+  (* TODO: improve the need to specify the predicate *)
+  apply (tower (P:=fun R: _ -> _ -> Prop => forall x y, R x y ->  R (Tau x) y)). 
+  - intros P HP x y xy R PR. apply HP; auto. 
+  - intros. now apply bTauL. 
 Qed.
 
-(** so that we get the following deduction rule about the companion: *)
-Corollary tau_l R x y: t R x y ->  t R (Tau x) y.
-Proof.
-  intro H. apply (ft_t tauL_t). constructor. assumption.
-Qed.
 
 (** and we get a satisfactory proof *)
 Goal x ~ y.

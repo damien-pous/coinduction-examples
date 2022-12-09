@@ -1,7 +1,7 @@
 (** * Automata, regular expressions, language equivalence *)
 
 Require Import PeanoNat List. Import ListNotations.
-From Coinduction Require Import lattice coinduction rel tactics.
+From Coinduction Require Import lattice tower rel tactics.
 From AAC_tactics Require Import AAC.
 Transparent cup bot.
 
@@ -136,64 +136,32 @@ Section bisim.
  Proof.
    split.
    - intros H w. revert x y H. induction w; intros x y H.
-     -- apply (gfp_fp b) in H as [H _]. apply bool_eq, H.
-     -- apply (gfp_fp b) in H as [_ H]. apply IHw, H.
+     -- apply (gfp_pfp b) in H as [H _]. apply bool_eq, H.
+     -- apply (gfp_pfp b) in H as [_ H]. apply IHw, H.
    - revert x y. apply (leq_gfp b). intros x y xy. split.
      -- apply bool_eq, (xy []).
      -- intros a w. apply (xy (a::w)).
  Qed.
 
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Notation t := (t b).
- Notation T := (T b).
- Notation bt := (bt b).
- Notation bT := (bT b).
- Notation "x [~] y" := (t _ x y) (at level 79). 
- Notation "x {~} y" := (bt _ x y) (at level 79).
+ Notation "x [~] y" := (`_ x y) (at level 79). 
+ Notation "x {~} y" := (b `_ x y) (at level 79).
 
- (** [eq] is a post-fixpoint, thus [const eq] is below [t] *)
- Lemma eq_t: const eq <= t.
+ (** elements of the final chain are all equivalence relations *)
+ #[export] Instance Equivalence_chain {R: Chain b}: Equivalence `R.
  Proof.
-   apply leq_t. intro R. change (eq <= b eq). 
-   intros p ? <-. now split.
- Qed.
- 
- (** converse is compatible *)
- Lemma converse_t: converse <= t.
- Proof.
-   apply leq_t. intros S x y [xy xy']. split.
-   congruence. assumption.
- Qed.
- 
- (** so is squaring *)
- Lemma square_t: square <= t.
- Proof.
-   apply leq_t. intros S x z [y [xy xy'] [yz yz']]. split.
-   congruence. eexists; eauto.
- Qed.
- 
- (** thus [t R] is always an equivalence relations *)
- #[export] Instance Equivalence_t R: Equivalence (t R).
- Proof.
-   apply Equivalence_t.
-   apply eq_t. apply square_t. apply converse_t. 
- Qed.
- #[export] Instance Equivalence_T f R: Equivalence (T f R).
- Proof.
-   apply Equivalence_T.
-   apply eq_t. apply square_t. apply converse_t. 
+   constructor; revert R.
+   - apply Reflexive_chain. intros R HR x. now split.
+   - apply Symmetric_chain. intros R HR x y []. now split; symmetry.
+   - apply Transitive_chain. intros R HR x y z [] []. split. congruence. etransitivity; auto. 
  Qed.
 
 End bisim.
 
 (** reexporting notations *)
-Notation t := (t (b _)).
-Notation T := (T (b _)).
-Notation bt := (bt (b _)).
-Notation bT := (bT (b _)).
 Infix "~" := (gfp (b _)) (at level 70).
-Notation "x [~] y" := (t _ x y) (at level 79). 
-Notation "x {~} y" := (bt _ x y) (at level 79).
+Notation "x [~] y" := (`_ x y) (at level 79). 
+Notation "x {~} y" := (b _ `_ x y) (at level 79).
 
 
 (** make sure that elements of four are implicitely recognised as states of DA1' *)
@@ -358,24 +326,18 @@ Proof. now rewrite L_det, nL_single. Qed.
 Section d.
  Variable X: NA. 
  Notation b := (b (det X)).
- Notation t := (coinduction.t b).
  
- (** list concatenation (i.e., union) seen as a context is compatible, and hence below the companion *)
- Lemma ctx_app_t: binary_ctx (@app _) <= t.
+ (** list concatenation (i.e., union) seen as a context is compatible, 
+     and hence below the companion, and hence preserves all elements of the final chain of b *)
+ #[export] Instance app_chain: forall {R: Chain b}, Proper (`R ==> `R ==> `R) (@app _).
  Proof.
-   apply leq_t.
-   intros R. apply (leq_binary_ctx (@app X)).
-   intros x x' xx' y y' yy'. split.
+   apply (Proper_chain 2). 
+   intros R HR x x' xx' y y' yy'. split.
    - simpl. rewrite 2existsb_app.
-     apply proj1 in xx'. 
-     apply proj1 in yy'.
-     simpl in *. congruence.
+     f_equal. apply xx'. apply yy'.
    - intro a. simpl. rewrite 2flat_map_app.
-     apply in_binary_ctx.
-     apply xx'.
-     apply yy'.
+     apply HR. apply xx'. apply yy'.
  Qed.
- #[export] Instance app_t: forall R, Proper (t R ==> t R ==> t R) (@app _) := binary_proper_t ctx_app_t.
 
  (** moreover, list concatenation (which actually implements union), 
      is associative, commutative, idempotent *)
@@ -400,15 +362,18 @@ Section d.
    intros. now rewrite app_assoc. 
  Qed.
 
- #[export] Instance aac_appA R: Associative (t R) (@app _).
- Proof. repeat intro. apply (gfp_t b), appA. Qed.
- #[export] Instance aac_appC R: Commutative (t R) (@app _).
- Proof. repeat intro. apply (gfp_t b), appC. Qed.
- #[export] Instance aac_appI R: Idempotent (t R) (@app _).
- Proof. repeat intro. apply (gfp_t b), appI. Qed.
- #[export] Instance aac_appU R: Unit (t R) (@app _) [].
- Proof. split; intro. reflexivity. now rewrite app_nil_end. Qed.
-
+ Section s.
+ Context {R: Chain b}. 
+ #[export] Instance aac_appA: Associative `R (@app _).
+ Proof. repeat intro. now rewrite appA. Qed.
+ #[export] Instance aac_appC: Commutative `R (@app _).
+ Proof. repeat intro. now rewrite appC. Qed.
+ #[export] Instance aac_appI: Idempotent `R (@app _).
+ Proof. repeat intro. now rewrite appI. Qed.
+ #[export] Instance aac_appU: Unit `R (@app _) [].
+ Proof. split; intro. reflexivity. now rewrite app_nil_end. Qed. 
+ End s.
+ 
  (** declaring the above instances makes it possible to use the [aac_reflexivity] tactic to solve equations modulo ACI *)
  Goal forall x y z: X, [x]++[y]++[x]++[z] ~ [y]++[x]++[z].
  Proof.
@@ -481,9 +446,9 @@ Module EXP.
  (* there are only two letters of interest (0,1), so that we can use the following helper lemmas to analyse transitions *)
  Lemma next2 (x: list T) a: next x (S (S a)) = [].
  Proof. destruct x as [|x q]; cbn. reflexivity. now induction q. Qed.
- Lemma forall2 (R: _ -> _ -> Prop) (x y: list T):
-   t R (next x 0) (next y 0) /\ t R (next x 1) (next y 1)
-   -> (forall a, t R (next x a) (next y a)).
+ Lemma forall2 (R: Chain (b (det NAS))) (x y: list T):
+   `R (next x 0) (next y 0) /\ `R (next x 1) (next y 1)
+   -> (forall a, `R (next x a) (next y a)).
  Proof.
    intros [H0 H1].
    intros [|[|a]]; trivial.
@@ -575,7 +540,7 @@ Fixpoint lang_itr L n: language :=
   | O => lang_one
   | S n => lang_dot L (lang_itr L n)
   end.
-Definition lang_str L: language := sup_all (lang_itr L).
+Definition lang_str L: language := sup' top (lang_itr L).
 
 (** by recursion, language of a regular expression  *)
 Fixpoint lang (e: regex): language :=
@@ -607,7 +572,7 @@ Qed.
 #[export] Instance lang_str_weq: Proper (weq ==> weq) lang_str.
 Proof.
   intros L L' HL. unfold lang_str.
-  apply sup_weq. reflexivity. intro. now apply lang_itr_weq. 
+  apply sup_weq. reflexivity. intro. now apply lang_itr_weq.
 Qed.
 
 (** testing a language for the empty word *)
@@ -811,26 +776,28 @@ Proof. now coinduction R H; cbn. Qed.
 Lemma plsx0 x: x + 0 ~ x.
 Proof. now rewrite plsC, pls0x. Qed.   
 
-(** addition corresponds to a compatible function *)
-Lemma ctx_pls_t: binary_ctx pls <= t.
+(** addition corresponds to a compatible function 
+    and preserves elements of the final chain of [b BRZ] *)
+#[export] Instance pls_chain: forall {R: Chain (b _)}, Proper (`R ==> `R ==> `R) pls.
 Proof.
-  apply leq_t. intro R. apply (leq_binary_ctx pls).
-  intros x x' [Hx Hx'] y y' [Hy Hy'].
+  apply (Proper_chain 2). 
+  intros R HR x x' [Hx Hx'] y y' [Hy Hy'].
   split; cbn.
   - cbn in Hx, Hy. congruence.
-  - intro. now apply in_binary_ctx. 
+  - intro. now apply HR. 
 Qed.
-#[export] Instance pls_t: forall R, Proper (t R ==> t R ==> t R) pls := binary_proper_t ctx_pls_t.
-#[export] Instance pls_T f: forall R, Proper (T f R ==> T f R ==> T f R) pls := binary_proper_T ctx_pls_t.
 
-#[export] Instance pls_Associative R: Associative (t R) pls.
-Proof. intros ???. apply (gfp_t (b _)), plsA. Qed.
-#[export] Instance pls_Commutative R: Commutative (t R) pls.
-Proof. intros ??. apply (gfp_t (b _)), plsC. Qed.
-#[export] Instance pls_Idempotent R: Idempotent (t R) pls.
-Proof. intros ?. apply (gfp_t (b _)), plsI. Qed.
-#[export] Instance pls_Unit R: Unit (t R) pls 0.
-Proof. split; intro; apply (gfp_t (b _)). apply pls0x. apply plsx0. Qed.
+Section s.
+Context {R: Chain (b BRZ)}. 
+#[export] Instance pls_Associative: Associative `R pls.
+Proof. intros ???. now rewrite plsA. Qed.
+#[export] Instance pls_Commutative: Commutative `R pls.
+Proof. intros ??. now rewrite plsC. Qed.
+#[export] Instance pls_Idempotent: Idempotent `R pls.
+Proof. intros ?. now rewrite plsI. Qed.
+#[export] Instance pls_Unit: Unit `R pls 0.
+Proof. split; intro; now rewrite ?pls0x, ?plsx0. Qed.
+End s.
 
 Lemma dot0x: forall x, 0 · x ~ 0.
 Proof.
@@ -899,26 +866,25 @@ Proof.
     rewrite 2H. aac_reflexivity. 
 Qed.
 
-(** context function associated to concatenation is below the companion *)
-Lemma ctx_dot_t: binary_ctx dot <= t.
+(** context function associated to concatenation is below the companion 
+    and preserves elements of the final chain of [b BRZ] *)
+#[export] Instance dot_chain: forall {R: Chain (b _)}, Proper (`R ==> `R ==> `R) dot.
 Proof.
-  apply binary_ctx_t.
-  intros R x x' [Hx Hx'] y y' Hy.
+  apply (Proper_chain 2). 
+  intros R HR x x' [Hx Hx'] y y' Hy.
   split.
   - destruct Hy as [Hy _]; cbn in *; congruence.
-  - intro. cbn in Hx. cbn. rewrite Hx.
-    apply pls_T; apply binary_proper_Tctx. 
-    -- apply (id_T (b _)), Hx'.
-    -- apply (b_T (b _)), Hy.
-    -- reflexivity.
-    -- apply (id_T (b _)), Hy.
-Qed.
-#[export] Instance dot_t: forall R, Proper (t R ==> t R ==> t R) dot := binary_proper_t ctx_dot_t.
+  - intro. cbn in Hx, Hx'. cbn.
+    now rewrite Hx, (proj2 Hy), Hx', Hy.
+Qed.  
 
-#[export] Instance dot_Associative R: Associative (t R) dot.
-Proof. intros ???. apply (gfp_t (b _)), dotA. Qed.
-#[export] Instance dot_Unit R: Unit (t R) dot 1.
-Proof. split; intro; apply (gfp_t (b _)). apply dot1x. apply dotx1. Qed.
+Section s.
+Context {R: Chain (b BRZ)}. 
+#[export] Instance dot_Associative: Associative `R dot.
+Proof. intros ???. now rewrite dotA. Qed.
+#[export] Instance dot_Unit: Unit `R dot 1.
+Proof. split; intro. now rewrite dot1x. now rewrite dotx1. Qed.
+End s.
 
 (** a helper lemma *)
 Lemma kill_b (b: bool) e: e + b·e ~ e.
@@ -1111,7 +1077,7 @@ Qed.
 (* a first attempt at automation *)
 Ltac explore :=
   apply Antimirov;
-  coinduction ? ?;
+  coinduction R ?;
   repeat (next; letters; trivial; accumulate ?).
 
 Goal a^* ≡ 1+a·a^*.
@@ -1124,7 +1090,7 @@ Goal a^* ≡ a^*·a^*.
 Proof.
   (* here [explore] loops forever... *)
   apply Antimirov.
-  coinduction ? ?; next; letters; trivial.
+  coinduction R ?; next; letters; trivial.
   accumulate ?; next; letters; trivial.
   accumulate ?; next; letters; trivial.
   accumulate ?; next; letters; trivial.
@@ -1211,7 +1177,7 @@ Proof.
   - now rewrite Insert, IH. 
 Qed.
 
-Corollary reduce R h k: t R (sort h) (sort k) -> t R h k.
+Corollary reduce (R: Chain (b _)) h k: `R (sort h) (sort k) -> `R h k.
 Proof. now rewrite 2Sort. Qed.
 
   
@@ -1223,7 +1189,7 @@ Export C0.
 Goal a^* ≡ a^*·a^*.
 Proof.
   apply Antimirov.
-  coinduction ? ?; next; letters; trivial.
+  coinduction R ?; next; letters; trivial.
   accumulate ?; next; letters; trivial.
   (* by using lemma [reduce], we can sort or lists an remove duplicates *)
   apply reduce.
@@ -1235,7 +1201,7 @@ Qed.
 (** automation tactic, via Antimirov' automaton *)
 Ltac explore :=
   apply Antimirov;
-  coinduction ? ?;
+  coinduction R ?;
   repeat (next; letters; apply reduce; cbn; trivial; accumulate ?).
 
 Goal (a·b)^*·a ≡ a·(b·a)^*.
@@ -1312,31 +1278,17 @@ Section subst.
  Qed.
 
  (** generic properties of supremums *)
- Lemma sup_empty I (f: I -> language): sup bot f == bot.
- Proof.
-   apply antisym. now apply sup_spec. apply leq_bx. 
- Qed.
- Lemma sup_single I (f: I -> language) x: sup (eq x) f == f x.
- Proof.
-   apply antisym. apply sup_spec. now intros ? <-. now apply leq_xsup. 
- Qed.
- Lemma sup_cup I (f: I -> language) P Q: sup (cup P Q) f == cup (sup P f) (sup Q f).
- Proof.
-   apply antisym. apply sup_spec. intros i [H|H]; apply leq_xcup.
-   now left; apply leq_xsup. 
-   now right; apply leq_xsup.
-   apply cup_spec. now split; apply sup_leq. 
- Qed.
  Lemma sup_sup_all I J (f: I -> language) (g: J -> I -> Prop):
-   sup (sup_all g) f == sup_all (fun j => sup (g j) f).
+   sup' (sup' top g) f == sup' top (fun j => sup' (g j) f).
  Proof.
    apply antisym. apply sup_spec.
-   intros i [j gj]. apply eleq_xsup_all with j. now apply leq_xsup.
-   apply sup_all_spec. intro j. apply sup_spec. intros i H. apply leq_xsup. now exists j. 
+   intros i [j gj]. apply eleq_xsup with j; trivial. eapply eleq_xsup; eauto.
+   apply sup_spec. intros j _. apply sup_spec. intros i H. eapply eleq_xsup; eauto. 
+   now exists j. 
  Qed.
 
  (** a function h which is a homomorphism (useful to prove Proposition [lang_subst] below) *)
- Let h L := sup L (fun w => lang (wsubst w)).
+ Let h L := sup' L (fun w => lang (wsubst w)).
  Lemma h_one: h lang_one == lang_one.
  Proof. unfold h. now setoid_rewrite sup_single. Qed.
  Lemma h_dot L K: h (lang_dot L K) == lang_dot (h L) (h K).
@@ -1364,10 +1316,10 @@ Section subst.
  Qed.
 
  (** the language of a substituted expression can be expressed in terms of the language of the starting expressions *)
- Proposition lang_subst e: lang (subst e) == sup (lang e) (fun w => lang (wsubst w)).
+ Proposition lang_subst e: lang (subst e) == sup' (lang e) (fun w => lang (wsubst w)).
  Proof.
    induction e; simpl subst.
-   - now rewrite sup_empty. 
+   - now rewrite sup_bot. 
    - symmetry. apply h_one. 
    - setoid_rewrite sup_single. simpl wsubst. apply Brzozowski. now rewrite dotx1.
    - simpl lang. unfold lang_pls. rewrite sup_cup. now apply cup_weq.
@@ -1380,18 +1332,18 @@ Section subst.
  Theorem subst_eq e f: e ≡ f -> subst e ≡ subst f.
  Proof. intro H. rewrite 2lang_subst. now rewrite H. Qed.
  
- (** Open question: can we get the following stronger result? *)
- Conjecture ctxt_subst_t: unary_ctx subst <= t.
+ (** open question: can we get the following stronger result? *)
+ Conjecture subst_chain: forall {R: Chain (b _)}, Proper (`R ==> `R) subst.
  (*
  Proof.                         
-   apply unary_ctx_t.
-   intros R e f H. split.
+   apply (Proper_chain 1).
+   intros R HR e f H. split.
    (* not clear at all *)
  *)
 
  (** [subst_eq] follows from the conjecture: *)
  Corollary subst_eq' e f: e ≡ f -> subst e ≡ subst f.
- Proof. rewrite <-2Brzozowski. apply (unary_proper_t ctxt_subst_t). Qed.
+ Proof. rewrite <-2Brzozowski. apply subst_chain. Qed.
 End subst.
 
 

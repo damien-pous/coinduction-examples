@@ -1,7 +1,7 @@
 (** * Example: Rutten's stream calculus *)
 
 Require Import Psatz.
-From Coinduction Require Import coinduction rel tactics.
+From Coinduction Require Import tower rel tactics.
 Set Implicit Arguments.
 
 Module streams.
@@ -20,58 +20,18 @@ Module streams.
  (** associated relation *)
  Infix "~" := (gfp b) (at level 70).
  
- (** associated companions  *)
- Notation t := (t b).
- Notation T := (T b).
- Notation bt := (bt b).
- Notation bT := (bT b).
-
  (** notations  for easing readability in proofs by enhanced coinduction *)
- Infix "[~]" := (t _) (at level 70). 
- Infix "{~}" := (bt b _) (at level 70). 
- 
- (* setoid_rewriting is extremely slow in trying to use the fact that [~] is a subrelation of [[~]] and [T f R]
-    in order to improve compilation time, we specialize the corresponding instances
-    TODO: this is still not really efficient, fix this in a more satisfactory way (see more below). *)
- #[local] Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
- #[local] Instance subrelation_gfp_t_: forall R, subrelation (gfp b) (t R) := (@subrelation_gfp_t _ b).
- #[local] Instance subrelation_gfp_T_: forall f R, subrelation (gfp b) (T f R) := (@subrelation_gfp_T _ b).
+ Infix "[~]" := (`_) (at level 70). 
+ Infix "{~}" := (b `_) (at level 70). 
    
- (** [eq] is a post-fixpoint, thus [const eq] is below [t] *)
- Lemma eq_t: const eq <= t.
+ (** elements of the final chain are equivalence relations *)
+ #[export] Instance Equivalence_t {R: Chain b}: Equivalence `R.
  Proof.
-   apply leq_t. intro. change (eq <= b eq). 
-   intros p ? <-. split; eauto.
+   constructor; revert R.
+   - apply Reflexive_chain. intros R HR x. now split.
+   - apply Symmetric_chain. intros R HR x y []. now split; symmetry.
+   - apply Transitive_chain. intros R HR x y z [] []. split. congruence. etransitivity; eauto. 
  Qed.
-
- (** converse is compatible *)
- Lemma converse_t: converse <= t.
- Proof.
-   apply leq_t. intros S x y [xy xy']. split.
-   congruence. assumption.
- Qed.
-
- (** so is squaring *)
- Lemma square_t: square <= t.
- Proof.
-   apply leq_t. intros S x z [y [xy xy'] [yz yz']]. split.
-   congruence. eexists; eauto.
- Qed.
-
- (** thus [t R] and [T f R] are always equivalence relations *)
- #[export] Instance Equivalence_t R: Equivalence (t R).
- Proof.
-   apply Equivalence_t.
-   apply eq_t. apply square_t. apply converse_t. 
- Qed.
- #[export] Instance Equivalence_T f R: Equivalence (T f R).
- Proof.
-   apply Equivalence_T.
-   apply eq_t. apply square_t. apply converse_t. 
- Qed.
- (** and [gfp b = ~] in particular *)
- Corollary Equivalence_bisim: Equivalence (gfp b).
- Proof Equivalence_t bot.
  
  #[export] Instance hd_bisim: Proper (gfp b ==> eq) hd.
  Proof. intros x y H. apply (gfp_pfp b), H. Qed.
@@ -107,17 +67,15 @@ Module streams.
     apply HR.
  Qed.
 
- (** addition corresponds to a compatible function *)
- Lemma ctx_plus_t: binary_ctx plus <= t.
+ (** addition corresponds to a compatible function and preserves the final chain *)
+ #[export] Instance plus_chain: forall {R: Chain b}, Proper (`R ==> `R ==> `R) plus.
  Proof.
-   apply leq_t. apply binary_ctx_b.
-   intros R x x' [Hx Hx'] y y' [Hy Hy'].
-   split.
-    simpl. congruence.
-    simpl tl. now apply in_binary_ctx. 
+   apply (Proper_chain 2). 
+   intros R HR x y [xy0 xy'] u v [uv0 uv'].
+   split; cbn.
+    congruence.
+    now apply HR. 
  Qed.
- #[export] Instance plus_t: forall R, Proper (t R ==> t R ==> t R) plus := binary_proper_t ctx_plus_t.
- #[export] Instance plus_T f: forall R, Proper (T f R ==> T f R ==> T f R) plus := binary_proper_T ctx_plus_t.
  
 
  (** * shuffle product *)
@@ -128,55 +86,6 @@ Module streams.
  Axiom hd_shuf: forall s t, hd (s @ t) = (hd s * hd t)%nat.
  Axiom tl_shuf: forall s t, tl (s @ t) = tl s @ t + s @ tl t.
  Ltac ssimpl := repeat (rewrite ?hd_shuf, ?tl_shuf; simpl hd; simpl tl).
-
- (* TOFIX:
-    slowness of setoid_rewrite with subrelations...
-    cf. second rewrite in lemma [shuf_0x] below
-
-    it seems this is because [partial_application_tactic] is very long to fail.
-    doing
-    Local Hint Extern 3 (Proper _ _) => proper_subrelation : typeclass_instances.
-    solves it (by trying [proper_subrelation] first)
-    but this makes other rewrites much slower afterwards...
-
-    trying to remove most instances from the library doesn't seem to be helpful
-  *)
- (*
-   Local Remove Hints
-          CompleteLattice_Prop CompleteLattice_fun
-          gfp_leq gfp_weq
-          Equivalence_weq PartialOrder_weq_leq
-          sup_leq sup_weq
-          cup_leq cup_weq
-          inf_leq inf_weq
-          cap_leq cap_weq
-          Hbody
-          Hbody'
-          CompleteLattice_mon
-          comp_leq comp_weq
-          app_leq app_weq
-          subrelation_gfp_t subrelation_gfp_T
-      : typeclass_instances.
-   Print HintDb typeclass_instances.
-   Set Typeclasses Debug Verbosity 2.
-  *)
- (* declaring the following instances improves some simple steps:
-    for some reason, it is extremely slow when rewriting with subrelations in the present context,
-    and having immediate instances as below prevents it from exploring dead-ends
-  *)
- (*
- Instance proper_impl_t R:
-   Proper (gfp b ==> t R ==> Basics.impl) (t R).
- Proof. intros x y H u v H' E. eapply subrelation_gfp_t in H. now rewrite <-H, <-H'. Qed.
- Instance proper_impl'_t R:
-   Proper (gfp b ==> t R ==> Basics.flip Basics.impl) (t R).
- Proof. intros x y H u v H' E. eapply subrelation_gfp_t in H. now rewrite H, H'. Qed.
- Remove Hints subrelation_gfp_t subrelation_gfp_T: typeclass_instances.
-  *)
- (*
-   even wih those instances, other rewrites remain pretty slow, 
-   e.g., the [rewrite 2plusA] in lemma [shuf_x_plus] below
-  *)
  
  Lemma shuf_0x: forall x, c 0 @ x ~ c 0.
  Proof.
@@ -204,15 +113,15 @@ Module streams.
    coinduction R HR. intros x y z. split; ssimpl.
     nia. 
     rewrite 2HR. rewrite 2plusA. 
-    apply plus_t. 2: reflexivity.
+    apply plus_chain. 2: reflexivity.
     rewrite <-2plusA. 
-    apply plus_t. reflexivity. now rewrite plusC.
+    apply plus_chain. reflexivity. now rewrite plusC.
  Qed.
 
  Lemma shuf_plus_x: forall x y z, (y + z)@x ~ y@x + z@x.
  Proof.
    intros. rewrite shufC, shuf_x_plus.
-   apply plus_t; apply shufC.
+   apply plus_chain; apply shufC.
  Qed.
 
  Lemma shufA: forall x y z, x @ (y @ z) ~ (x @ y) @ z.
@@ -223,25 +132,21 @@ Module streams.
     now rewrite plusA. 
  Qed.
 
- (** shuffle product is only compatible up-to *)
- Lemma ctx_shuf_t: binary_ctx shuf <= t. 
+ (** shuffle product preserves the final chain *)
+ #[export] Instance shuf_chain: forall {R: Chain b}, Proper (`R ==> `R ==> `R) shuf.
  Proof.
-   apply binary_ctx_t. 
-   intros R x x' Hx y y' Hy. split; ssimpl.
-   f_equal. apply Hx. apply Hy.
-   (* TOTHINK: would be nicer to do this by rewriting *)
-   apply plus_T; apply binary_proper_Tctx.
-   apply (id_T b), Hx. 
-   apply (b_T b), Hy. 
-   apply (b_T b), Hx. 
-   apply (id_T b), Hy. 
+   apply (Proper_chain 2). 
+   intros R HR x y xy u v uv. 
+   pose proof xy as [xy0 xy'].
+   pose proof uv as [uv0 uv'].
+   split; ssimpl. congruence.
+   now rewrite xy', uv', xy, uv.
  Qed.
- #[export] Instance shuf_t: forall R, Proper (t R ==> t R ==> t R) shuf := binary_proper_t ctx_shuf_t. 
  
  
  (** * convolution product *)
- (* like shuffle product, convolution product cannot be defined as easily as one could expect in Coq.
-    Here we simply assume its existence for the sake of simplicity *)
+ (** like shuffle product, convolution product cannot be defined as easily as one could expect in Coq.
+     Here we simply assume its existence for the sake of simplicity *)
  Parameter mult: S -> S -> S.
  Infix "*" := mult.
  Axiom hd_mult: forall s t, hd (s * t) = (hd s * hd t)%nat.
@@ -281,9 +186,9 @@ Module streams.
    coinduction R HR. intros x y z. split; msimpl.
     nia. 
     rewrite 2HR. rewrite 2plusA. 
-    apply plus_t. 2: reflexivity.
+    apply plus_chain. 2: reflexivity.
     rewrite <-2plusA. 
-    apply plus_t. reflexivity. now rewrite plusC.
+    apply plus_chain. reflexivity. now rewrite plusC.
  Qed.
 
  Lemma c_plus n m: c (n+m) ~ c n + c m.
@@ -300,28 +205,25 @@ Module streams.
     now rewrite mult_0x, mult_x0, plus_0x.
  Qed.
 
- (** as for the shuffle product, convolution product is only compatible up to  *)
- Lemma ctx_mult_t: binary_ctx mult <= t. 
+ (** convolution product preserves the final chain  *)
+ #[export] Instance mult_chain: forall {R: Chain b}, Proper (`R ==> `R ==> `R) mult.
  Proof.
-   apply binary_ctx_t. 
-   intros R x x' Hx y y' Hy. split; msimpl.
-   f_equal. apply Hx. apply Hy.
-   apply plus_T; apply binary_proper_Tctx. 
-   apply (id_T b), Hx. 
-   apply (b_T b), Hy.
-   rewrite (proj1 Hx). reflexivity. 
-   apply (id_T b), Hy.
+   apply (Proper_chain 2). 
+   intros R HR x y xy u v uv. 
+   pose proof xy as [xy0 xy'].
+   pose proof uv as [uv0 uv'].
+   split; msimpl. congruence.
+   now rewrite xy', uv', xy0, uv.
  Qed.
- #[export] Instance mult_t: forall R, Proper (t R ==> t R ==> t R) mult := binary_proper_t ctx_mult_t.
  
  Lemma mult_plus_x: forall x y z, (y + z) * x ~ y*x + z*x.
  Proof.
    coinduction R HR. intros x y z. split; msimpl.
     nia. 
     rewrite c_plus, 2HR, 2plusA.
-    apply plus_t. 2: reflexivity.
+    apply plus_chain. 2: reflexivity.
     rewrite <-2plusA. 
-    apply plus_t. reflexivity. now rewrite plusC.
+    apply plus_chain. reflexivity. now rewrite plusC.
  Qed.
  
  Lemma multA: forall x y z, x * (y * z) ~ (x * y) * z.

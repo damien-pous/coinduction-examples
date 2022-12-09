@@ -6,7 +6,7 @@ In Proc. POPL, pages 193–206. ACM, 2013.
 
   *)
 
-From Coinduction Require Import coinduction.
+From Coinduction Require Import companion.
 Set Implicit Arguments.
 
 (** utilities to represent finite predicates using lists *)
