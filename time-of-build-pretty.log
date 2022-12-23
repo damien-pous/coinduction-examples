@@ -1,0 +1,9 @@
+    Time |  Peak Mem | File Name            
+--------------------------------------------
+0m52.21s | 659284 ko | Total Time / Peak Mem
+--------------------------------------------
+0m29.01s | 659284 ko | automata.vo          
+0m19.61s | 609888 ko | ccs.vo               
+0m03.16s | 420696 ko | streams.vo           
+0m00.24s | 346756 ko | divergence.vo        
+0m00.19s | 311476 ko | gpaco.vo             
