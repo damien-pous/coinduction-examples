@@ -1,7 +1,7 @@
 (** * Example: Rutten's stream calculus *)
 
 Require Import Psatz.
-From Coinduction Require Import tower rel tactics.
+From Coinduction Require Import all. Import CoindNotations.
 Set Implicit Arguments.
 
 Module streams.

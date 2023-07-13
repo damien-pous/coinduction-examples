@@ -12,7 +12,7 @@ https://arxiv.org/abs/2001.02659
 
 Set Implicit Arguments.
 Set Primitive Projections.
-From Coinduction Require Import tower rel tactics.
+From Coinduction Require Import all. Import CoindNotations.
 
 (** streams with internal actions *)
 Variant streamF streamF :=

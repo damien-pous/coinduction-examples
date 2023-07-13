@@ -9,7 +9,7 @@
 (* TOTHINK: algebraic definition of generating functions? *)
 
 From RelationAlgebra Require Import kat prop rel comparisons kat_tac rewriting.
-From Coinduction Require Import lattice tower rel tactics.
+From Coinduction Require Import all. Import CoindNotations.
 From AAC_tactics Require Import AAC.
 Set Implicit Arguments.
 
