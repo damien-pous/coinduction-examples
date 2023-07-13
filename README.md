@@ -23,7 +23,7 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
 - Coq-community maintainer(s):
   - Damien Pous ([**@damien-pous**](https://github.com/damien-pous))
 - License: [GNU LGPL](LICENSE)
-- Additional dependencies: coq-coinduction, and coq-aac-tactics for the CCS example
+- Additional dependencies: coq-coinduction, and coq-aac-tactics + coq-relation-algebra for the CCS example
 - Coq namespace: `CoinductionExamples`
 - Related publication(s):
   - [Coinduction All the Way Up](https://hal.archives-ouvertes.fr/hal-01259622) doi:[10.1145/2933575.2934564](http://dx.doi.org/10.1145/2933575.2934564)
@@ -46,3 +46,12 @@ cd coinduction-examples
 make
 make install
 ```
+
+## Compatibility
+
+v1.5 compiles with coq-coinduction v1.5
+v1.6 compiles with coq-coinduction v1.6
+etc
+
+to see how to port code from coq-coinduction v1.6 to v1.7, 
+check the following commit 7afec25f051cc4b45820c333bfd4b4689d86abef
