@@ -19,7 +19,7 @@ build: [
 ]
 install: [make "install"]
 depends: [
-  "coq-coinduction" {>= "8.15"} 
+  "coq-coinduction" {>= "1.7"} 
   "coq-aac-tactics" 
 ]
 

@@ -49,9 +49,5 @@ make install
 
 ## Compatibility
 
-v1.5 compiles with coq-coinduction v1.5
-v1.6 compiles with coq-coinduction v1.6
-etc
-
 to see how to port code from coq-coinduction v1.6 to v1.7, 
 check the following commit 7afec25f051cc4b45820c333bfd4b4689d86abef
