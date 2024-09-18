@@ -371,8 +371,20 @@ Section d.
  #[export] Instance aac_appI: Idempotent `R (@app _).
  Proof. repeat intro. now rewrite appI. Qed.
  #[export] Instance aac_appU: Unit `R (@app _) [].
- Proof. split; intro. reflexivity. now rewrite app_nil_end. Qed. 
+ Proof. split; intro. reflexivity. now rewrite app_nil_r. Qed.
+
+ (* this lemma should not be useful with better aac_tactics *)
+ Lemma appM {x y z k k' l l'}: `R (x++y++k) (z++k') -> `R (x++y++l) (z++l') -> `R (x++y++k++l) (z++k'++l').
+ Proof. 
+   intros K L.
+ Admitted.
+ (*   rewrite appA, K. *)
+ (*   rewrite <-appA, (appC k' l), appA, L. *)
+ (*   now rewrite <-appA, (appC l' k'), appA. *)
+ (* Qed. *)
+   
  End s.
+
  
  (** declaring the above instances makes it possible to use the [aac_reflexivity] tactic to solve equations modulo ACI *)
  Goal forall x y z: X, [x]++[y]++[x]++[z] ~ [y]++[x]++[z].
@@ -478,33 +490,32 @@ Module EXP.
    coinduction R H. repeat split; trivial; apply forall2; cbn; tauto. 
  Qed.
 
- (** a proof with a linear bisimulation up to congruence (here 7 pairs) *)
+ (** a proof with a linear bisimulation up to union (here 7 pairs) *)
  Goal [x;y] ~ [z].
  Proof.
    cut ([x;y] ~ [z]
-   /\ [x; x1; y] ~ [z; z1]
+   /\ [x; y; x1] ~ [z; z1]
    /\ [x; y; y1] ~ [z; z1]
-   /\ [x; x2; y; y1] ~ [z; z1; z2]
-   /\ [x; y; y1; y2] ~ [z; z1; z2]
-   /\ [x; x3; y; y1; y2] ~ [z; z1; z2; z3]
-   /\ [x; y; y1; y2; y3] ~ [z; z1; z2; z3])
+   /\ [x; y; x2] ~ [z; z2]
+   /\ [x; y; y2] ~ [z; z2]
+   /\ [x; y; x3] ~ [z; z3]
+   /\ [x; y; y3] ~ [z; z3])
    .
    tauto.
-   coinduction R (H1&H2&H3&H4&H5&H6&H7).
-   rewrite <-H3 in H2. 
-   rewrite <-H5 in H4. 
-   rewrite <-H7 in H6. 
-   repeat split; trivial; apply forall2; cbn; split; trivial.
-   - fold_app. aac_rewrite H2. assumption. 
-   - fold_app. aac_rewrite H2. aac_rewrite H4. assumption.
-   - fold_app. aac_rewrite H4. assumption. 
-   - fold_app. aac_rewrite H2. assumption.
-   - fold_app. aac_rewrite H2. aac_rewrite H6. assumption.
-   - fold_app. aac_rewrite H6. assumption.
-   - fold_app. aac_rewrite H2. now aac_rewrite H7.
-   - fold_app. aac_rewrite H2. now aac_rewrite H7.
-   - fold_app. aac_rewrite H2. now aac_rewrite H7.   
+   coinduction R (H&Hx1&Hy1&Hx2&Hy2&Hx3&Hy3).
+   repeat split; trivial; apply forall2; cbn; split; trivial; fold_app.
+   1,10,11: now aac_rewrite Hx1.
+   (* aac_tactics are painful here *)
+   - rewrite <- (appM Hx1 Hx2); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hy1 Hx2); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hx1 Hy2); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hy1 Hy2); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hx1 Hx3); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hy1 Hx3); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hx1 Hy3); cbn; fold_app; aac_reflexivity. 
+   - rewrite <- (appM Hy1 Hy3); cbn; fold_app; aac_reflexivity. 
  Qed.
+ 
 End EXP.
 
 
