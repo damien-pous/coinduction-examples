@@ -10,7 +10,7 @@ From Coinduction Require Import companion.
 Set Implicit Arguments.
 
 (** utilities to represent finite predicates using lists *)
-Require Import List.
+From Stdlib Require Import List.
 Import ListNotations.
 Section l.
  Variable A: Type.

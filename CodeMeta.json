@@ -18,7 +18,7 @@
     "codeRepository": "https://github.com/damien-pous/coinduction-examples",
     "dateCreated": "2021-10-08",
     "datePublished": "2021-10-08",
-    "description": "Examples on how to use the coq-coinduction library, for doing proofs by (enhanced) coinduction: divergence, Milner's CCS, and Rutten's stream calculus."
+    "description": "Examples on how to use the rocq-coinduction library, for doing proofs by (enhanced) coinduction: divergence, Milner's CCS, and Rutten's stream calculus."
     "keywords": [
 	"coinduction",
 	"up to techniques",
@@ -27,7 +27,6 @@
 	"divergence",
 	"streams",
 	"CCS",
-        "Coq",
         "Rocq"
     ],
     "license": "GNU LGPL",

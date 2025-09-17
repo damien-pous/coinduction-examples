@@ -1,6 +1,6 @@
 (** * Example: Rutten's stream calculus *)
 
-Require Import Psatz.
+From Stdlib Require Import Psatz.
 From Coinduction Require Import all. Import CoindNotations.
 Set Implicit Arguments.
 
@@ -79,7 +79,7 @@ Module streams.
  
 
  (** * shuffle product *)
- (** shuffle product cannot be defined as easily as one could expect in Coq, 
+ (** shuffle product cannot be defined as easily as one could expect in Rocq, 
      because of the guard condition. Here we simply assume its existence for the sake of simplicity *)
  Parameter shuf: S -> S -> S.
  Infix "@" := shuf (at level 40, left associativity).
@@ -145,7 +145,7 @@ Module streams.
  
  
  (** * convolution product *)
- (** like shuffle product, convolution product cannot be defined as easily as one could expect in Coq.
+ (** like shuffle product, convolution product cannot be defined as easily as one could expect in Rocq.
      Here we simply assume its existence for the sake of simplicity *)
  Parameter mult: S -> S -> S.
  Infix "*" := mult.

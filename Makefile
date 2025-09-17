@@ -1,12 +1,19 @@
--include Makefile.coq
+KNOWNTARGETS := RocqMakefile
+KNOWNFILES   := Makefile _RocqProject
 
-Makefile.coq: 
-	$(COQBIN)coq_makefile -f _CoqProject -o Makefile.coq
+.DEFAULT_GOAL := invoke-rocqmakefile
+
+RocqMakefile: Makefile _RocqProject
+	$(ROCQBIN)rocq makefile -f _RocqProject -docroot . -o RocqMakefile
+
+invoke-rocqmakefile: RocqMakefile
+	$(MAKE) --no-print-directory -f RocqMakefile $(filter-out $(KNOWNTARGETS),$(MAKECMDGOALS))
+
+.PHONY: invoke-rocqmakefile $(KNOWNFILES)
 
 cleanall:: clean
-	rm -f Makefile.coq* depgraph.*
+	rm -f RocqMakefile* *.d *.log */*.glob */.*.aux */*.vo*
 
-depgraph::
-	coqdep *.v -dumpgraph depgraph.dot 1>/dev/null 2>/dev/null
-	sed -i 's/\[label=\"\([^"]*\)\"]/[label="\1";URL=".\/html\/CoinductionExamples.\1.html"]/g' depgraph.dot
-	dot depgraph.dot -Tsvg -o depgraph.svg
+# This should be the last rule, to handle any targets not declared above
+%: invoke-rocqmakefile
+	@true

@@ -1,6 +1,6 @@
 (** * Automata, regular expressions, language equivalence *)
 
-Require Import PeanoNat List. Import ListNotations.
+From Stdlib Require Import PeanoNat List. Import ListNotations.
 From Coinduction Require Import all. Import CoindNotations.
 From AAC_tactics Require Import AAC.
 Transparent cup bot.

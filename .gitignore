@@ -9,7 +9,5 @@
 html
 _build
 .merlin
-depgraph.*
-Makefile.coq
-Makefile.coq.conf
-reification_i.ml
+RocqMakefile
+RocqMakefile.conf

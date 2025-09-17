@@ -23,7 +23,7 @@ Module CCS(Export M: N).
  Variant label := tau | out(a: N) | inp(a: N).
   
  (** CCS processes. Instead of using process constants, as in the paper, 
-   we use a coinductive definition. In other words, we use Coq's corecursive 
+   we use a coinductive definition. In other words, we use Rocq's corecursive 
    definitions to encode CCS recursion *)
  CoInductive S :=
  | nil

@@ -1,6 +1,6 @@
 # CoinductionExamples
 
-Examples on how to use the coq-coinduction library, a library for doing proofs by (enhanced) coinduction based on the notion of 'companion', from the paper:
+Examples on how to use the rocq-coinduction library, a library for doing proofs by (enhanced) coinduction based on the notion of 'companion', from the paper:
 Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
 
  - a formalisation of Hur et al's toy example on divergence 
@@ -20,11 +20,11 @@ Coinduction All the Way Up. Damien Pous. In Proc. LICS, 2016.
 
 - Author(s):
   - Damien Pous (initial)
-- Coq-community maintainer(s):
+- Rocq-community maintainer(s):
   - Damien Pous ([**@damien-pous**](https://github.com/damien-pous))
 - License: [GNU LGPL](LICENSE)
-- Additional dependencies: coq-coinduction, and coq-aac-tactics + coq-relation-algebra for the CCS example
-- Coq namespace: `CoinductionExamples`
+- Additional dependencies: rocq-coinduction, and rocq-aac-tactics + rocq-relation-algebra for the CCS example
+- Rocq namespace: `CoinductionExamples`
 - Related publication(s):
   - [Coinduction All the Way Up](https://hal.archives-ouvertes.fr/hal-01259622) doi:[10.1145/2933575.2934564](http://dx.doi.org/10.1145/2933575.2934564)
 
@@ -34,8 +34,8 @@ The easiest way to install the latest released version of CoinductionExamples
 is via [OPAM](https://opam.ocaml.org/doc/Install.html):
 
 ```shell
-opam repo add coq-released https://coq.inria.fr/opam/released
-opam install coq-coinduction-examples
+opam repo add rocq-released https://rocq-prover.org/opam/released
+opam install rocq-coinduction-examples
 ```
 
 To instead build and install manually, do:
