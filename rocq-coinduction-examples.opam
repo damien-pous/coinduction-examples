@@ -19,7 +19,8 @@ build: [
 ]
 install: [make "install"]
 depends: [
-  "rocq-coinduction" 
+  "rocq-coinduction" {>= "1.22"}
+  "rocq-relation-algebra" {>= "1.9.0"}
   "rocq-aac-tactics" 
 ]
 

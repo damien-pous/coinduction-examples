@@ -8,11 +8,11 @@ Transparent cup bot.
 Set Implicit Arguments.
 
 (** we take natural numbers as alphabet (letters) *)
-Notation A := nat.
+Abbreviation A := nat.
 (** words are lists of letters *)
-Notation word := (list A).
+Abbreviation word := (list A).
 (** languages are predicates on words *)
-Notation language := (word -> Prop). 
+Abbreviation language := (word -> Prop). 
 
 (** * Deterministic automata *)
 Module Import DA.
@@ -262,7 +262,7 @@ Module NA.
   next: states -> A -> list states; (* each state has a list of successors along each letter *)
  }.
 End NA.
-Notation NA := NA.NA.
+Abbreviation NA := NA.NA.
 Coercion NA.states: NA >-> Sortclass.
 
 (** language of a state in a non-deterministic automaton *)
@@ -325,7 +325,7 @@ Proof. now rewrite L_det, nL_single. Qed.
 (** up-to union technique in determinised automata *)
 Section d.
  Variable X: NA. 
- Notation b := (b (det X)).
+ Abbreviation b := (b (det X)).
  
  (** list concatenation (i.e., union) seen as a context is compatible, 
      and hence below the companion, and hence preserves all elements of the final chain of b *)
@@ -532,8 +532,8 @@ Notation "0" := zer.
 Notation "1" := one. 
 Infix "+" := pls.
 Infix "·" := dot (at level 41, right associativity).
-Notation "e ^*" := (str e) (at level 20).
-Notation "e ^+" := (e·e^*) (at level 20).
+Notation "e ^*" := (str e) (at level 1).
+Notation "e ^+" := (e·e^*) (at level 1).
 
 (** ** regular operations on languages *)
 Definition lang_zer: language := bot. 
@@ -946,9 +946,9 @@ Qed.
 
 (** proving `concrete' laws is slightly easier, but there is still quite a lot of bookkeeping *)
 Module C0.
-Notation a := (var 0).
-Notation b := (var 1).
-Notation c := (var 2).
+Abbreviation a := (var 0).
+Abbreviation b := (var 1).
+Abbreviation c := (var 2).
 Ltac letters :=
   repeat match goal with |- context[Nat.eqb ?a _] => is_var a; destruct a; cbn end.
 
@@ -1118,7 +1118,7 @@ this will allow us to mimic finite sets with lists more faithfully
 *)
 
 (** comparing regular expressions, syntactically *)
-Notation lex c d := match c with Eq => d | _ => c end.
+Abbreviation lex c d := match c with Eq => d | _ => c end.
 Fixpoint compare e f :=
   match e,f with
   | 0,0 => Eq
@@ -1273,7 +1273,7 @@ Section subst.
    | var a => s a
    | e+f => subst e + subst f
    | e·f => subst e · subst f
-   | e^* => subst e^*
+   | e^* => (subst e)^*
    end.
  (** in a given word *)
  Fixpoint wsubst (w: word) :=

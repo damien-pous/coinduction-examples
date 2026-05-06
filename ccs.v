@@ -59,6 +59,7 @@ Module CCS(Export M: N).
  | t_new: forall a p l p', trans l p p' -> fresh a l -> trans l (new a p) (new a p')
  | t_rep: forall p l p', trans l (!p ∥ p) p' -> trans l (!p) p'
  .
+ Create HintDb ccs.
  Global Hint Resolve t_prf t_par_l t_par_r t_par_lr t_par_rl t_new t_pls_l t_pls_r: ccs.
  
  Lemma t_rep': forall p l p', trans l p p' -> trans l (!p) (!p ∥ p').
@@ -97,7 +98,7 @@ Module CCS(Export M: N).
  Next Obligation. cbv. firstorder. Qed.
  
  (** the symmetrised version, defining (strong) bisimulations and bisimilarity *)
- Notation b := (cap s (comp converse (comp s converse))).
+ Abbreviation b := (cap s (comp converse (comp s converse))).
 
  Notation "p ~ q" := (gfp b p%ccs q%ccs) (at level 70).
  (** notations  for easing readability in proofs by enhanced coinduction *)
@@ -573,7 +574,7 @@ Module CCS(Export M: N).
  Next Obligation. cbv. firstorder. Qed.
  
  (** the symmetrised version, defining weak bisimulations and bisimilarity *)
- Notation wb := (cap w (comp converse (comp w converse))).
+ Abbreviation wb := (cap w (comp converse (comp w converse))).
 
  Notation "p ≈ q" := (gfp wb p%ccs q%ccs) (at level 70).
  (** notations  for easing readability in proofs by enhanced coinduction *)
@@ -638,13 +639,13 @@ Module CCS(Export M: N).
  Qed.
 
  (* TODO: better interaction with RelationAlgebra *)
- Lemma cnv_wt (R: Chain wb): RelationAlgebra.lattice.weq ((`R: hrel _ _)°) (`R).
+ Lemma cnv_wt (R: Chain wb): RelationAlgebra.lattice.weq ((`R: hrel _ _)^°) (`R).
  Proof.
    apply RelationAlgebra.lattice.antisym; intros ???.
    now eapply Symmetric_wt.
    now eapply Symmetric_wt in H.
  Qed.
- Lemma cnv_gfp: RelationAlgebra.lattice.weq ((gfp wb: hrel _ _)°) (gfp wb).
+ Lemma cnv_gfp: RelationAlgebra.lattice.weq ((gfp wb: hrel _ _)^°) (gfp wb).
  Proof. apply cnv_wt. Qed.
  
  (** by symmetry, similar result for left-to-right game *)

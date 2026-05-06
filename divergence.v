@@ -39,7 +39,7 @@ Definition edge i j :=
     the set of divergent states *)
 Program Definition step: mon (S -> Prop) := {| body P i := exists2 j, edge i j & P j |}.
 Next Obligation. firstorder. Qed.
-Notation diverges x := (gfp step x).
+Abbreviation diverges x := (gfp step x).
 
 (** direct proof, by plain coinduction: we guess an appropriate predicate  *)
 Goal diverges a.
@@ -53,8 +53,8 @@ Proof.
 Qed.
 
 (** some notations and helpers to do proofs by parametrised coinduction *)
-Notation D l x := (t step (In l) x).
-Notation D' l x := (step (body (t step) (In l)) x).
+Abbreviation D l x := (t step (In l) x).
+Abbreviation D' l x := (step (body (t step) (In l)) x).
 
 Lemma init x: D [] x -> diverges x.
 Proof. revert x. apply (t step). now rewrite In_nil. Qed.

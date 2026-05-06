@@ -19,7 +19,7 @@ Variant streamF streamF :=
 | TauF(s: streamF)
 | VisF(n: nat)(s: streamF).
 CoInductive stream := inj {obs: streamF stream}.
-Notation stream' := (streamF stream).
+Abbreviation stream' := (streamF stream).
 
 Definition Tau s := {|obs := TauF s|}.
 Definition Vis n s := {|obs := VisF n s|}.
@@ -28,8 +28,8 @@ Definition Vis n s := {|obs := VisF n s|}.
 CoFixpoint x := Vis 0 (Vis 2 (Tau x)). 
 CoFixpoint y := Vis 0 (Vis 2 y). 
 
-Notation rel' := (stream' -> stream' -> Prop).
-Notation rel := (stream -> stream -> Prop).
+Abbreviation rel' := (stream' -> stream' -> Prop).
+Abbreviation rel := (stream -> stream -> Prop).
 
 (** monotone function whose greatest fixpoint is desired notion of equivalence on streams:
     internal actions are ignored, as long as we eventually get a value
